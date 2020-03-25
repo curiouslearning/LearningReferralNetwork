@@ -3,6 +3,9 @@ package com.curiouslearning.referralnetwork.android.sample.ui.main;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -23,6 +26,8 @@ import com.curiouslearning.referralnetwork.android.sample.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -58,6 +63,16 @@ public class MainFragment extends Fragment {
 
         mFirestore = FirebaseFirestore.getInstance();
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Create channel to show notifications.
+            String channelId  = getString(R.string.default_notification_channel_id);
+            String channelName = getString(R.string.default_notification_channel_name);
+            NotificationManager notificationManager =
+                    getActivity().getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(new NotificationChannel(channelId,
+                    channelName, NotificationManager.IMPORTANCE_LOW));
+        }
+
         mTitleText = (TextView) view.findViewById(R.id.title);
         mProgressEditText = (EditText) view.findViewById(R.id.progress_field);
         Button mUpdateButton = (Button) view.findViewById(R.id.update_button);
@@ -88,6 +103,33 @@ public class MainFragment extends Fragment {
 
                 mProgressEditText.setText("");
                 Toast.makeText(getActivity(), "Writing to Firestore", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        Button logTokenButton = view.findViewById(R.id.token_button);
+        logTokenButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Get token
+                // [START retrieve_current_token]
+                FirebaseInstanceId.getInstance().getInstanceId()
+                        .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                                if (!task.isSuccessful()) {
+                                    Log.w(TAG, "getInstanceId failed", task.getException());
+                                    return;
+                                }
+
+                                // Get new Instance ID token
+                                String token = task.getResult().getToken();
+
+                                // Log and toast
+                                Log.d(TAG, token);
+                                Toast.makeText(getActivity(), token, Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                // [END retrieve_current_token]
             }
         });
 

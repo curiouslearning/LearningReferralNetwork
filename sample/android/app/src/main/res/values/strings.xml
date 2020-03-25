@@ -1,4 +1,13 @@
 <resources>
+    <!-- Application Name -->
     <string name="app_name">sample</string>
+    <!-- (Obsolete) Button to update firebase value -->
     <string name="update_button">Update</string>
+    <!-- Button to get FCM token -->
+    <string name="token_button">FCM Token</string>
+    <!-- FCM Notification Channel ID -->
+    <string name="default_notification_channel_id">lrn</string>
+    <string name="default_notification_channel_name" translatable="true">LRN</string>
+    <!-- FCM Notification Content Title -->
+    <string name="fcm_message">Learning Referral Network</string>
 </resources>
