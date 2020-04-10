@@ -1,0 +1,259 @@
+openapi: 3.0.0
+info:
+  description: Application Query API for learning referral network.  You can find out more about
+    Learning Referral Network at
+    [http://curiouslearning.org](http://curiouslearning.org).
+  version: 1.0.0
+  title: Learning Referral Network
+  termsOfService: 'http://curiouslearning.org'
+  contact:
+    email: jyip@curiouslearning.org
+  license:
+    name: MIT
+    url: 'https://opensource.org/licenses/MIT'
+host:
+  
+servers:
+  - url: https://us-central1-learning-referral-network.cloudfunctions.net/v1
+tags:
+  - name: query
+    description: API for application query
+  - name: admin
+    description: API for making changes to application database
+paths:
+  /query:
+    get:
+      tags:
+        - query
+      summary: Query the database
+      operationId: queryByAttributes
+      parameters:
+        - $ref: '#/components/parameters/limitParam'
+      responses:
+        '200':
+          description: Query result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+        '400':
+          $ref: '#/components/responses/Invalid'
+  /admin/app/{appId}:
+    get:
+      tags:
+        - admin
+      summary: Returns all application metadata
+      operationId: getAppById
+      parameters:
+        - in: path
+          name: appId
+          description: Unique app ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Application details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    delete:
+      tags:
+        - admin
+      summary: Delete application from database
+      operationId: deleteApp
+      parameters:
+        - in: path
+          name: appId
+          description: Unique app ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Application deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Application not found
+      security:
+        - OAuth2: []
+  /admin/app:
+    post:
+      tags:
+        - admin
+      description: Add application to the database
+      operationId: addApplication
+      requestBody:
+        $ref: '#/components/requestBodies/ApplicationBody'
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          $ref: '#/components/responses/Invalid'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      security:
+        - OAuth2: []
+    put:
+      tags:
+        - admin
+      description: Update an app to the database
+      operationId: updateApplication
+      requestBody:
+        $ref: '#/components/requestBodies/ApplicationBody'
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          $ref: '#/components/responses/Invalid'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - OAuth2: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.google.com/o/oauth2/v2/auth
+          tokenUrl: https://oauth2.googleapis.com/token
+          scopes:
+            openid: OpenID
+            email: email access
+            profile: profile access
+  parameters:
+    limitParam:
+      name: limit
+      in: query
+      description: Maximum number of items to return.
+      required: false
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 100
+        default: 20
+  requestBodies:
+    QueryBody:
+      description: A JSON object describing a query requst
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              'locale':
+                type: string
+                description: Target locale of the results
+              'type':
+                type: string
+                enum: ['keyword', 'adjacency']
+              'query':
+                type: object
+                description: Attributes and value to query for
+                additionalProperties:
+                  type: string
+              'limit':
+                type: integer
+                description: Maximum number of items to return
+    ApplicationBody:
+      description: A JSON object containing application information
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Application'
+  responses:
+    Invalid:
+      description: Invalid request body
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+  schemas:
+    Summary:
+      type: object
+      properties:
+        'id':
+          type: integer
+          format: int64
+          description: Unique application ID within the database
+        'platform_id':
+          type: string
+          description: Platform specific unique identifier for the application. This would be package name for Android, bundle ID for iOS and URL for web-based applications.
+        'title':
+          type: string
+          description: Title of the application to be displayed on the referral UI
+        'locale':
+          type: string
+          description: ISO 639 Locale Code (ie. “en-us”)
+        'description':
+          type: string
+          description: Additional description of the application on the referral UI if we don’t want our users to be redirected out of the application to see this information
+      required:
+        - id
+        - platform_id
+        - title
+    Application:
+      type: object
+      properties:
+        'summary':
+          $ref: '#/components/schemas/Summary'
+        'attributes':
+          type: object
+          additionalProperties:
+            type: object
+          description: Attributes are key-value pairs that describe the application content and intent. Certain attributes can be applied to most applications and those are defined here. Such attributes are expected to grow as we gain more understanding of the product, but existing definitions should not change for backward compatibility reasons. Applications are not required to have all the attributes defined either. It is also possible for applications to provide additional keyword “tags” to help improve query relevance.
+    QueryResult:
+      type: object
+      description: Result from a application query
+      properties:
+        'result':
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchingItem'
+    MatchingItem:
+      type: object
+      description: Matching item from a query
+      properties:
+        'item':
+          $ref: '#/components/schemas/Summary'
+        'score':
+          type: number
+          format: float
+        
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+      required:
+        - code
+        - message
