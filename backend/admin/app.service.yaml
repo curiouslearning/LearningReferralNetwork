@@ -1,0 +1,2 @@
+service: admin
+runtime: python37

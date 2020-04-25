@@ -1,0 +1,184 @@
+swagger: '2.0'
+info:
+  contact:
+    email: jyip@curiouslearning.org
+  description: >-
+    Application Query API for learning referral network.  You can find out more
+    about Learning Referral Network at
+    [http://curiouslearning.org](http://curiouslearning.org).
+  license:
+    name: MIT
+    url: 'https://opensource.org/licenses/MIT'
+  termsOfService: 'http://curiouslearning.org'
+  title: Referral Endpoint on Cloud Run
+  version: 1.0.0
+# Hostname of the ESP gateway
+host: referral-gateway-hj2cd4bxba-de.a.run.app
+basePath: /api/v1
+x-google-backend:
+  # URL of the API backend
+  address: https://learning-referral-network.appspot.com/
+  # IAP OAuth Client
+  jwt_audience: 972445763316-p4opm7kh8mlhkslu4b7itpjesdqoba5l.apps.googleusercontent.com
+schemes:
+  - https
+paths:
+  /query:
+    get:
+      tags:
+        - query
+      operationId: execute_query
+      summary: Query the database
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/limitParam'
+      responses:
+        '200':
+          description: Query result
+          schema:
+            $ref: '#/definitions/QueryResult'
+        '400':
+          $ref: '#/responses/Invalid'
+      x-swagger-router-controller: "controllers.query"
+definitions:
+  ApiError:
+    properties:
+      code:
+        format: int32
+        type: integer
+      message:
+        type: string
+    required:
+      - code
+      - message
+    type: object
+  Application:
+    properties:
+      attributes:
+        additionalProperties:
+          type: object
+        description: >-
+          Attributes are key-value pairs that describe the application content
+          and intent. Certain attributes can be applied to most applications and
+          those are defined here. Such attributes are expected to grow as we
+          gain more understanding of the product, but existing definitions
+          should not change for backward compatibility reasons. Applications are
+          not required to have all the attributes defined either. It is also
+          possible for applications to provide additional keyword “tags” to help
+          improve query relevance.
+        type: object
+      summary:
+        $ref: '#/definitions/Summary'
+    type: object
+  MatchingItem:
+    description: Matching item from a query
+    properties:
+      item:
+        $ref: '#/definitions/Summary'
+      score:
+        format: float
+        type: number
+    type: object
+  QueryResult:
+    description: Result from a application query
+    properties:
+      result:
+        items:
+          $ref: '#/definitions/MatchingItem'
+        type: array
+    type: object
+  Summary:
+    properties:
+      description:
+        description: >-
+          Additional description of the application on the referral UI if we
+          don’t want our users to be redirected out of the application to see
+          this information
+        type: string
+      id:
+        description: Unique application ID within the database
+        format: int64
+        type: integer
+      locale:
+        description: ISO 639 Locale Code (ie. “en-us”)
+        type: string
+      platform_id:
+        description: >-
+          Platform specific unique identifier for the application. This would be
+          package name for Android, bundle ID for iOS and URL for web-based
+          applications.
+        type: string
+      title:
+        description: Title of the application to be displayed on the referral UI
+        type: string
+    required:
+      - id
+      - platform_id
+      - title
+    type: object
+securityDefinitions:
+  ApiKey:
+    type: apiKey
+    name: key
+    in: query
+    description: basic authentication with API key
+    x-apikeyInfoFunc: "controllers.auth.verify_apikey"
+security:
+  - ApiKey: []
+tags:
+  - description: API for application query
+    name: query
+  - description: API for making changes to application database
+    name: admin
+parameters:
+  limitParam:
+    name: limit
+    in: query
+    description: Maximum number of items to return.
+    required: false
+    type: integer
+    format: int32
+    default: 20
+    maximum: 100
+    minimum: 1
+responses:
+  Invalid:
+    description: Invalid request body
+    schema:
+      $ref: '#/definitions/ApiError'
+  NotFound:
+    description: The specified resource was not found
+    schema:
+      $ref: '#/definitions/ApiError'
+  Unauthorized:
+    description: Unauthorized
+    schema:
+      $ref: '#/definitions/ApiError'
+x-components:
+  requestBodies:
+    QueryBody:
+      content:
+        application/json:
+          schema:
+            properties:
+              limit:
+                description: Maximum number of items to return
+                type: integer
+              locale:
+                description: Target locale of the results
+                type: string
+              query:
+                additionalProperties:
+                  type: string
+                description: Attributes and value to query for
+                type: object
+              type:
+                enum:
+                  - keyword
+                  - adjacency
+                type: string
+            type: object
+      description: A JSON object describing a query requst
+      required: true
+

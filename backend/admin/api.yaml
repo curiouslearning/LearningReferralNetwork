@@ -1,0 +1,213 @@
+swagger: '2.0'
+info:
+  contact:
+    email: jyip@curiouslearning.org
+  description: "Administration of curated LRN applications"
+  license:
+    name: MIT
+    url: 'https://opensource.org/licenses/MIT'
+  termsOfService: 'http://curiouslearning.org'
+  title: Admin Endpoint on Cloud Run
+  version: 1.0.0
+# Hostname of the ESP gateway
+host: admin-gateway-hj2cd4bxba-de.a.run.app
+basePath: /api
+x-google-backend:
+  # URL of the API backend
+  address: https://admin-dot-learning-referral-network.appspot.com/
+  # IAP OAuth Client
+  jwt_audience: 972445763316-p4opm7kh8mlhkslu4b7itpjesdqoba5l.apps.googleusercontent.com
+schemes:
+  - https
+paths:
+  /app:
+    post:
+      tags:
+        - collection
+      description: Add application to the database
+      operationId: add_app
+      consumes:
+        - application/json
+      parameters:
+        - description: A JSON object containing application information
+          in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/Application'
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          $ref: '#/responses/Invalid'
+        '401':
+          $ref: '#/responses/Unauthorized'
+      x-swagger-router-controller: "controllers.collection"
+    put:
+      tags:
+        - collection
+      description: Update an app to the database
+      operationId: update_app
+      parameters: []
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          $ref: '#/responses/Invalid'
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '404':
+          $ref: '#/responses/NotFound'
+      x-swagger-router-controller: "controllers.collection"
+  '/app/{appId}':
+    delete:
+      tags:
+        - collection
+      operationId: delete_app
+      summary: Delete application from database
+      parameters:
+        - description: Unique app ID
+          in: path
+          name: appId
+          required: true
+          type: integer
+      responses:
+        '200':
+          description: Application deleted
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '404':
+          $ref: '#/responses/NotFound'
+      x-swagger-router-controller: "controllers.collection"
+    get:
+      tags:
+        - collection
+      operationId: get_app_by_id
+      summary: Returns all application metadata
+      produces:
+        - application/json
+      parameters:
+        - description: Unique app ID
+          in: path
+          name: appId
+          required: true
+          type: integer
+      responses:
+        '200':
+          description: Application details
+          schema:
+            $ref: '#/definitions/Application'
+        '401':
+          $ref: '#/responses/Unauthorized'
+        '404':
+          $ref: '#/responses/NotFound'
+      x-swagger-router-controller: "controllers.collection"
+definitions:
+  ApiError:
+    properties:
+      code:
+        format: int32
+        type: integer
+      message:
+        type: string
+    required:
+      - code
+      - message
+    type: object
+  Application:
+    properties:
+      attributes:
+        additionalProperties:
+          type: object
+        description: >-
+          Attributes are key-value pairs that describe the application content
+          and intent. Certain attributes can be applied to most applications and
+          those are defined here. Such attributes are expected to grow as we
+          gain more understanding of the product, but existing definitions
+          should not change for backward compatibility reasons. Applications are
+          not required to have all the attributes defined either. It is also
+          possible for applications to provide additional keyword “tags” to help
+          improve query relevance.
+        type: object
+      summary:
+        $ref: '#/definitions/Summary'
+    type: object
+  Summary:
+    properties:
+      description:
+        description: >-
+          Additional description of the application on the referral UI if we
+          don’t want our users to be redirected out of the application to see
+          this information
+        type: string
+      id:
+        description: Unique application ID within the database
+        format: int64
+        type: integer
+      locale:
+        description: ISO 639 Locale Code (ie. “en-us”)
+        type: string
+      platform_id:
+        description: >-
+          Platform specific unique identifier for the application. This would be
+          package name for Android, bundle ID for iOS and URL for web-based
+          applications.
+        type: string
+      title:
+        description: Title of the application to be displayed on the referral UI
+        type: string
+    required:
+      - id
+      - platform_id
+      - title
+    type: object
+securityDefinitions:
+  Firebase:
+    type: oauth2
+    flow: implicit
+    authorizationUrl: ''
+    description: >-
+      Firebase authentication, see [GCP
+      documentation](https://cloud.google.com/endpoints/docs/openapi/authenticating-users-firebase)
+    scopes: {}
+    x-tokenInfoFunc: "controllers.auth.verify_token"
+security:
+  - Firebase: []
+tags:
+  - description: API for making changes to application collection
+    name: collection
+parameters:
+  limitParam:
+    name: limit
+    in: query
+    description: Maximum number of items to return.
+    required: false
+    type: integer
+    format: int32
+    default: 20
+    maximum: 100
+    minimum: 1
+responses:
+  Invalid:
+    description: Invalid request body
+    schema:
+      $ref: '#/definitions/ApiError'
+  NotFound:
+    description: The specified resource was not found
+    schema:
+      $ref: '#/definitions/ApiError'
+  Unauthorized:
+    description: Unauthorized
+    schema:
+      $ref: '#/definitions/ApiError'
+x-components:
+  requestBodies:
+    ApplicationBody:
+      description: A JSON object containing application information
+      in: body
+      name: body
+      required: true
+      schema:
+        $ref: '#/definitions/Application'
+
+
