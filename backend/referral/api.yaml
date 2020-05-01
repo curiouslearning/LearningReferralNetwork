@@ -33,6 +33,18 @@ paths:
         - application/json
       parameters:
         - $ref: '#/parameters/limitParam'
+        - in: query
+          name: keywords
+          description: 'Comma separated list of keywords to match, if no keywords are
+            supplied, all apps with the specified locale will be returned (subjected
+            to the limit parameter)'
+          required: true
+          type: string
+        - in: query
+          name: locale
+          description: Filter results by app locale
+          required: true
+          type: string
       responses:
         '200':
           description: Query result
@@ -55,11 +67,12 @@ definitions:
     type: object
   Application:
     properties:
-      attributes:
+      skills:
+        type: object
         additionalProperties:
           type: object
         description: >-
-          Attributes are key-value pairs that describe the application content
+          Skills are key-value pairs that describe the application content
           and intent. Certain attributes can be applied to most applications and
           those are defined here. Such attributes are expected to grow as we
           gain more understanding of the product, but existing definitions
@@ -67,7 +80,6 @@ definitions:
           not required to have all the attributes defined either. It is also
           possible for applications to provide additional keyword “tags” to help
           improve query relevance.
-        type: object
       summary:
         $ref: '#/definitions/Summary'
     type: object
@@ -82,12 +94,12 @@ definitions:
     type: object
   QueryResult:
     description: Result from a application query
+    type: object
     properties:
       result:
+        type: array
         items:
           $ref: '#/definitions/MatchingItem'
-        type: array
-    type: object
   Summary:
     properties:
       description:
@@ -171,7 +183,7 @@ x-components:
               query:
                 additionalProperties:
                   type: string
-                description: Attributes and value to query for
+                description: Skills to query for
                 type: object
               type:
                 enum:
