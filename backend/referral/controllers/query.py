@@ -1,13 +1,14 @@
 import logging
 
+from common.config import Config
 from firebase_admin import firestore
 from models.api_error import ApiError
 from models.application import Application
 from models.matching_item import MatchingItem
 from models.query_result import QueryResult
-from models.summary import Summary
+from models.app_info import AppInfo
 
-def execute_query(locale, limit=20, keywords=None):  # noqa: E501
+def execute_query(locale, limit=Config.DEFAULT_QUERY_LIMIT, skills=None):  # noqa: E501
     """Query the database
 
      # noqa: E501
@@ -18,11 +19,6 @@ def execute_query(locale, limit=20, keywords=None):  # noqa: E501
     :rtype: QueryResult
     """
     db = firestore.client()
-
-    # List of search terms to pass into Firestore query
-    query_terms = []
-    if keywords:
-        query_terms = keywords.split(',')
 
     # Holds the list of matching items that will be returned in the
     # query response
@@ -40,22 +36,36 @@ def execute_query(locale, limit=20, keywords=None):  # noqa: E501
         #   10 equality (==) or array-contains conditions on a single field. For
         #   other cases, create a separate query for each OR condition and merge
         #   the query results in your app.
-        query = apps_ref.where(u'skills', u'array_contains_any', query_terms)
+        db_query = apps_ref.where('locale', '==', locale)
+
+        # List of search terms to pass into Firestore query
+        query_terms = []
+        if skills:
+            query_terms = skills.split(',')
+            db_query = db_query.where(u'skills', u'array_contains_any', query_terms)
 
         # Execute query
-        apps = query.limit(limit).stream()
+        apps = db_query.limit(limit).stream()
 
         for app in apps:
-            print(u'{} => {}'.format(app.id, app.to_dict().get('packageName')))
             # Need to integrate Firestore client with Summary model
             # Keys used in Firestore should be the same as model here
             # Use protobuf
-            app_info = app.to_dict()
-            app_summary = Summary(id=app.id)
-            for attr in ('title', 'platform_id', 'locale'):
-                app_summary.__setattr__(attr, app_info[attr])
-            matching_app = MatchingItem(item=app_summary, score=1.0)
-            matching_items.append(matching_app)
+            app_doc = app.to_dict()
+            # from_dict will ignore attributes that are not part of AppInfo
+            # since AppInfo is a subset of the fields in Application
+            app_info = AppInfo.from_dict(app_doc)
+
+            # Crude way of calculating score based on the number of matches
+            if len(query_terms) > 0:
+                app_skills = set(app_doc['skills'])
+                matching_skills = app_skills.intersection(set(query_terms))
+                matching_score = len(matching_skills)/len(query_terms)
+            else:
+                matching_score = 1
+
+            # Add to the list of matching app
+            matching_items.append(MatchingItem(item=app_info, score=matching_score))
     except Exception as e:
         logging.error('Failed to get document from firestore with error: ' + str(e))
         return ApiError(400, 'Failed to get fetch results')

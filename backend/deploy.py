@@ -183,7 +183,7 @@ if __name__ == '__main__':
     endpoints = EndpointsClient()
     app_engine = AppEngineClient()
 
-    services = ['referral', 'admin']
+    services = ['referral']
 
     get_gateway_name = lambda service: '%s-gateway' % service
 

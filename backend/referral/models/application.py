@@ -1,11 +1,11 @@
 # coding: utf-8
 
-from __future__ import absolute_import
-
+from __future__ import absolute_import, annotations
 from datetime import date, datetime  # noqa: F401
 
 from typing import List, Dict  # noqa: F401
-from models.summary import Summary
+
+from models import *
 from models.base_model_ import Model
 from common import util
 
@@ -16,17 +16,17 @@ class Application(Model):
     Do not edit the class manually.
     """
 
-    def __init__(self, skills: Dict[str, object]=None, summary: Summary=None):  # noqa: E501
+    def __init__(self, skills: List[str]=None, summary: AppInfo=None):  # noqa: E501
         """Application - a model defined in Swagger
 
         :param skills: The skills of this Application.  # noqa: E501
-        :type skills: Dict[str, object]
+        :type skills: List[str]
         :param summary: The summary of this Application.  # noqa: E501
-        :type summary: Summary
+        :type summary: AppInfo
         """
         self.swagger_types = {
-            'skills': Dict[str, object],
-            'summary': Summary
+            'skills': List[str],
+            'summary': AppInfo
         }
 
         self.attribute_map = {
@@ -49,45 +49,45 @@ class Application(Model):
         return util.deserialize_model(dikt, cls)
 
     @property
-    def skills(self) -> Dict[str, object]:
+    def skills(self) -> List[str]:
         """Gets the skills of this Application.
 
-        Skills are key-value pairs that describe the application content and intent. Certain skills can be applied to most applications and those are defined here. Such skills are expected to grow as we gain more understanding of the product, but existing definitions should not change for backward compatibility reasons. Applications are not required to have all the skills defined either. It is also possible for applications to provide additional keyword “tags” to help improve query relevance.  # noqa: E501
+        Skills are key-value pairs that describe the application content and intent. Certain attributes can be applied to most applications and those are defined here. Such attributes are expected to grow as we gain more understanding of the product, but existing definitions should not change for backward compatibility reasons. Applications are not required to have all the attributes defined either. It is also possible for applications to provide additional keyword “tags” to help improve query relevance.  # noqa: E501
 
         :return: The skills of this Application.
-        :rtype: Dict[str, object]
+        :rtype: List[str]
         """
         return self._skills
 
     @skills.setter
-    def skills(self, skills: Dict[str, object]):
+    def skills(self, skills: List[str]):
         """Sets the skills of this Application.
 
-        skills are key-value pairs that describe the application content and intent. Certain skills can be applied to most applications and those are defined here. Such skills are expected to grow as we gain more understanding of the product, but existing definitions should not change for backward compatibility reasons. Applications are not required to have all the skills defined either. It is also possible for applications to provide additional keyword “tags” to help improve query relevance.  # noqa: E501
+        Skills are key-value pairs that describe the application content and intent. Certain attributes can be applied to most applications and those are defined here. Such attributes are expected to grow as we gain more understanding of the product, but existing definitions should not change for backward compatibility reasons. Applications are not required to have all the attributes defined either. It is also possible for applications to provide additional keyword “tags” to help improve query relevance.  # noqa: E501
 
         :param skills: The skills of this Application.
-        :type skills: Dict[str, object]
+        :type skills: List[str]
         """
 
         self._skills = skills
 
     @property
-    def summary(self) -> Summary:
+    def summary(self) -> AppInfo:
         """Gets the summary of this Application.
 
 
         :return: The summary of this Application.
-        :rtype: Summary
+        :rtype: AppInfo
         """
         return self._summary
 
     @summary.setter
-    def summary(self, summary: Summary):
+    def summary(self, summary: AppInfo):
         """Sets the summary of this Application.
 
 
         :param summary: The summary of this Application.
-        :type summary: Summary
+        :type summary: AppInfo
         """
 
         self._summary = summary

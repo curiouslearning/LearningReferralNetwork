@@ -4,7 +4,8 @@ from __future__ import absolute_import
 from datetime import date, datetime  # noqa: F401
 
 from typing import List, Dict  # noqa: F401
-from models.matching_item import MatchingItem
+
+from models import *
 from models.base_model_ import Model
 from common import util
 

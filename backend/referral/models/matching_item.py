@@ -1,10 +1,12 @@
 # coding: utf-8
 
-from __future__ import absolute_import
+from __future__ import absolute_import, annotations
 from datetime import date, datetime  # noqa: F401
 
 from typing import List, Dict  # noqa: F401
-from models.summary import Summary
+
+from models import *
+from models.app_info import AppInfo
 from models.base_model_ import Model
 from common import util
 
@@ -15,16 +17,16 @@ class MatchingItem(Model):
     Do not edit the class manually.
     """
 
-    def __init__(self, item: Summary=None, score: float=None):  # noqa: E501
+    def __init__(self, item: AppInfo=None, score: float=None):  # noqa: E501
         """MatchingItem - a model defined in Swagger
 
         :param item: The item of this MatchingItem.  # noqa: E501
-        :type item: Summary
+        :type item: AppInfo
         :param score: The score of this MatchingItem.  # noqa: E501
         :type score: float
         """
         self.swagger_types = {
-            'item': Summary,
+            'item': AppInfo,
             'score': float
         }
 
@@ -48,22 +50,22 @@ class MatchingItem(Model):
         return util.deserialize_model(dikt, cls)
 
     @property
-    def item(self) -> Summary:
+    def item(self) -> AppInfo:
         """Gets the item of this MatchingItem.
 
 
         :return: The item of this MatchingItem.
-        :rtype: Summary
+        :rtype: AppInfo
         """
         return self._item
 
     @item.setter
-    def item(self, item: Summary):
+    def item(self, item: AppInfo):
         """Sets the item of this MatchingItem.
 
 
         :param item: The item of this MatchingItem.
-        :type item: Summary
+        :type item: AppInfo
         """
 
         self._item = item

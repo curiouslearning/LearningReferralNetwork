@@ -3,14 +3,12 @@ info:
   contact:
     email: jyip@curiouslearning.org
   description: >-
-    Application Query API for learning referral network.  You can find out more
-    about Learning Referral Network at
-    [http://curiouslearning.org](http://curiouslearning.org).
+    API to query for application referrals from learning referral network.
   license:
     name: MIT
     url: 'https://opensource.org/licenses/MIT'
   termsOfService: 'http://curiouslearning.org'
-  title: Referral Endpoint on Cloud Run
+  title: Referral API
   version: 1.0.0
 # Hostname of the ESP gateway
 host: referral-gateway-hj2cd4bxba-de.a.run.app
@@ -29,22 +27,32 @@ paths:
         - query
       operationId: execute_query
       summary: Query the database
+      consumes:
+        - application/json
       produces:
         - application/json
       parameters:
-        - $ref: '#/parameters/limitParam'
         - in: query
-          name: keywords
-          description: 'Comma separated list of keywords to match, if no keywords are
-            supplied, all apps with the specified locale will be returned (subjected
-            to the limit parameter)'
-          required: true
-          type: string
+          name: limit
+          description: 'Maximum number of items to return'
+          type: integer
+          format: int32
+          default: 20
+          maximum: 100
+          minimum: 1
+          required: false
         - in: query
           name: locale
-          description: Filter results by app locale
-          required: true
+          description: 'Filter results by app locale'
           type: string
+          required: true
+        - in: query
+          name: skills
+          description: 'Comma separated list of skills to match, if no skills are supplied, all apps with the
+            specified locale will be returned. An app in the result would contain one or more skills listed,
+            the matching score reflects the percentage of skill terms matched'
+          type: string
+          required: false
       responses:
         '200':
           description: Query result
@@ -68,9 +76,9 @@ definitions:
   Application:
     properties:
       skills:
-        type: object
-        additionalProperties:
-          type: object
+        type: array
+        items:
+          type: string
         description: >-
           Skills are key-value pairs that describe the application content
           and intent. Certain attributes can be applied to most applications and
@@ -80,14 +88,14 @@ definitions:
           not required to have all the attributes defined either. It is also
           possible for applications to provide additional keyword “tags” to help
           improve query relevance.
-      summary:
-        $ref: '#/definitions/Summary'
+      info:
+        $ref: '#/definitions/AppInfo'
     type: object
   MatchingItem:
     description: Matching item from a query
     properties:
       item:
-        $ref: '#/definitions/Summary'
+        $ref: '#/definitions/AppInfo'
       score:
         format: float
         type: number
@@ -100,7 +108,7 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/MatchingItem'
-  Summary:
+  AppInfo:
     properties:
       description:
         description: >-
@@ -139,21 +147,8 @@ securityDefinitions:
 security:
   - ApiKey: []
 tags:
-  - description: API for application query
+  - description: API for referral query
     name: query
-  - description: API for making changes to application database
-    name: admin
-parameters:
-  limitParam:
-    name: limit
-    in: query
-    description: Maximum number of items to return.
-    required: false
-    type: integer
-    format: int32
-    default: 20
-    maximum: 100
-    minimum: 1
 responses:
   Invalid:
     description: Invalid request body
@@ -167,30 +162,5 @@ responses:
     description: Unauthorized
     schema:
       $ref: '#/definitions/ApiError'
-x-components:
-  requestBodies:
-    QueryBody:
-      content:
-        application/json:
-          schema:
-            properties:
-              limit:
-                description: Maximum number of items to return
-                type: integer
-              locale:
-                description: Target locale of the results
-                type: string
-              query:
-                additionalProperties:
-                  type: string
-                description: Skills to query for
-                type: object
-              type:
-                enum:
-                  - keyword
-                  - adjacency
-                type: string
-            type: object
-      description: A JSON object describing a query requst
-      required: true
+
 
