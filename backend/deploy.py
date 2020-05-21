@@ -219,7 +219,7 @@ if __name__ == '__main__':
         # Update ESP environment variable
         # The endpoint service name is the same as the ESP host because that is the entry point
         # for all API requests. Endpoints only support 1 openAPI spec
-        update_args = {'set-env-vars': 'ENDPOINTS_SERVICE_NAME=%s,ESP_ARGS=--rollout_strategy=managed' % endpoint_service_name}
+        update_args = {'set-env-vars': '^|^ENDPOINTS_SERVICE_NAME=%s|ESP_ARGS=--rollout_strategy=managed,--cors_preset=basic' % endpoint_service_name}
         cloud_run.deploy_esp_service(gateway_name, **update_args)
 
 

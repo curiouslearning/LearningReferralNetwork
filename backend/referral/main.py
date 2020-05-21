@@ -1,7 +1,7 @@
 import connexion
+import firebase_admin
 
 from common import encoder
-import firebase_admin
 
 app = connexion.App(__name__, specification_dir='./')
 app.app.json_encoder = encoder.JSONEncoder
