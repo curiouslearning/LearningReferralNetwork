@@ -1,2 +1,4 @@
 class Config:
-    DEFAULT_QUERY_LIMIT = 20
+    DEFAULT_RESULTS_LIMIT = 20
+
+    APP_DB_COLLECTION = 'apps'

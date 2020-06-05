@@ -21,46 +21,61 @@ x-google-backend:
 schemes:
   - https
 paths:
-  /query:
-    get:
+  /referral:
+    post:
       tags:
         - query
-      operationId: execute_query
-      summary: Query the database
+      operationId: make_recommendation
+      summary: 'Request for app referrals from the recommendation engine given a set of user metrics'
       consumes:
         - application/json
       produces:
         - application/json
       parameters:
-        - in: query
-          name: limit
-          description: 'Maximum number of items to return'
-          type: integer
-          format: int32
-          default: 20
-          maximum: 100
-          minimum: 1
-          required: false
-        - in: query
-          name: locale
-          description: 'Filter results by app locale'
-          type: string
+        - in: body
+          name: body  # This is ignored for request body and for documentation only
+          description: 'A JSON object containing the parameters for getting referrals from
+            the recommendation engine'
           required: true
-        - in: query
-          name: skills
-          description: 'Comma separated list of skills to match, if no skills are supplied, all apps with the
-            specified locale will be returned. An app in the result would contain one or more skills listed,
-            the matching score reflects the percentage of skill terms matched'
-          type: string
-          required: false
+          schema:
+            type: object
+            required:
+              - package_name
+              - locale
+            properties:
+              package_name:
+                type: string
+                description: 'Package name of the application making this request. This field is
+                  used to provide additional context to the recommendation engine such as locale.
+                  For Android applications this would be the com.* package ID.'
+              locale:
+                type: string
+              total_sessions:
+                type: integer
+                minimum: 0
+              average_session_length:
+                type: integer
+                minimum: 0
+              days_since_last_session:
+                type: integer
+                minimum: 0
+              progress_by_skill:
+                type: object
+                additionalProperties:
+                  type: integer
+              max_results:
+                type: integer
+                default: 20
+                maximum: 100
+                minimum: 1
       responses:
         '200':
-          description: Query result
+          description: 'List of app referrals from the recommendation engine'
           schema:
-            $ref: '#/definitions/QueryResult'
+            $ref: '#/definitions/ReferralResult'
         '400':
           $ref: '#/responses/Invalid'
-      x-swagger-router-controller: "controllers.query"
+      x-swagger-router-controller: "controllers.referral"
 definitions:
   ApiError:
     properties:
@@ -91,8 +106,8 @@ definitions:
       info:
         $ref: '#/definitions/AppInfo'
     type: object
-  MatchingItem:
-    description: Matching item from a query
+  ReferralItem:
+    description: 'Summary and relevance of a referral'
     properties:
       item:
         $ref: '#/definitions/AppInfo'
@@ -100,14 +115,14 @@ definitions:
         format: float
         type: number
     type: object
-  QueryResult:
-    description: Result from a application query
+  ReferralResult:
     type: object
+    description: 'App referrals generated from recommender'
     properties:
       result:
         type: array
         items:
-          $ref: '#/definitions/MatchingItem'
+          $ref: '#/definitions/ReferralItem'
   AppInfo:
     properties:
       description:
@@ -147,7 +162,7 @@ securityDefinitions:
 security:
   - ApiKey: []
 tags:
-  - description: API for referral query
+  - description: API to query for recommendations
     name: query
 responses:
   Invalid:
@@ -162,5 +177,4 @@ responses:
     description: Unauthorized
     schema:
       $ref: '#/definitions/ApiError'
-
 

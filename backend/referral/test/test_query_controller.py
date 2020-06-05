@@ -6,7 +6,7 @@ from flask import json
 from six import BytesIO
 
 from models.api_error import ApiError  # noqa: E501
-from models.query_result import QueryResult  # noqa: E501
+from models.referral_result import ReferralResult  # noqa: E501
 from test import BaseTestCase
 
 
