@@ -1,3 +1,11 @@
+# Notes on running the script
+# See .swagger-codegen-ignore to see which files are not generated. A lot of the common classes
+# were moved into common/, however when generating the models, the import paths need to be manually
+# corrected:
+# 1. util comes from 'common' not 'PACKAGE_NAME' (eg. referral)
+# 2. Fix imports for the models
+# 3. Do not regenerate util.py as it breaks python 3.7 (see https://github.com/zalando/connexion/issues/739)
+
 PROJECT_PATH=$(pwd)/..
 
 PLATFORM=python-flask

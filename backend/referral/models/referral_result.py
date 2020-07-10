@@ -5,7 +5,7 @@ from datetime import date, datetime  # noqa: F401
 
 from typing import List, Dict  # noqa: F401
 
-from models import *
+from models.referral_item import ReferralItem
 from models.base_model_ import Model
 from common import util
 
@@ -17,9 +17,9 @@ class ReferralResult(Model):
     """
 
     def __init__(self, result: List[ReferralItem]=None):  # noqa: E501
-        """QueryResult - a model defined in Swagger
+        """ReferralResult - a model defined in Swagger
 
-        :param result: The result of this QueryResult.  # noqa: E501
+        :param result: The result of this ReferralResult.  # noqa: E501
         :type result: List[ReferralItem]
         """
         self.swagger_types = {
@@ -38,27 +38,27 @@ class ReferralResult(Model):
 
         :param dikt: A dict.
         :type: dict
-        :return: The QueryResult of this QueryResult.  # noqa: E501
+        :return: The ReferralResult of this ReferralResult.  # noqa: E501
         :rtype: ReferralResult
         """
         return util.deserialize_model(dikt, cls)
 
     @property
     def result(self) -> List[ReferralItem]:
-        """Gets the result of this QueryResult.
+        """Gets the result of this ReferralResult.
 
 
-        :return: The result of this QueryResult.
+        :return: The result of this ReferralResult.
         :rtype: List[ReferralItem]
         """
         return self._result
 
     @result.setter
     def result(self, result: List[ReferralItem]):
-        """Sets the result of this QueryResult.
+        """Sets the result of this ReferralResult.
 
 
-        :param result: The result of this QueryResult.
+        :param result: The result of this ReferralResult.
         :type result: List[ReferralItem]
         """
 

@@ -8,7 +8,6 @@ from models.api_error import ApiError
 from models.application import Application
 from models.referral_item import ReferralItem
 from models.referral_result import ReferralResult
-from models.app_info import AppInfo
 from pydantic import BaseModel
 from typing import Dict
 from werkzeug.exceptions import BadRequest
@@ -28,7 +27,7 @@ class ReferralRequestBody(BaseModel):
     max_results: int = Config.DEFAULT_RESULTS_LIMIT
 
 
-def make_recommendation(body):  # noqa: E501
+def make_recommendation():  # noqa: E501
     """Invoke recommendation engine to get app referral
 
      # noqa: E501
@@ -71,9 +70,7 @@ def make_recommendation(body):  # noqa: E501
             # Keys used in Firestore should be the same as model here
             # Use protobuf
             app_doc = app.to_dict()
-            # from_dict will ignore attributes that are not part of AppInfo
-            # since AppInfo is a subset of the fields in Application
-            app_info = AppInfo.from_dict(app_doc)
+            app_info = Application.from_dict(app_doc)
 
             # Add to the list of matching app
             referrals.append(ReferralItem(item=app_info, score=1))

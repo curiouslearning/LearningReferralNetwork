@@ -33,7 +33,7 @@ paths:
         - application/json
       parameters:
         - in: body
-          name: body  # This is ignored for request body and for documentation only
+          name: referralRequest  # This is ignored for request body and for documentation only
           description: 'A JSON object containing the parameters for getting referrals from
             the recommendation engine'
           required: true
@@ -90,6 +90,24 @@ definitions:
     type: object
   Application:
     properties:
+      description:
+        description: >-
+          Additional description of the application on the referral UI if we
+          don’t want our users to be redirected out of the application to see
+          this information
+        type: string
+      locale:
+        description: ISO 639 Locale Code (ie. “en-us”)
+        type: string
+      platform_id:
+        description: >-
+          Platform specific unique identifier for the application. This would be
+          package name for Android, bundle ID for iOS and URL for web-based
+          applications.
+        type: string
+      title:
+        description: Title of the application to be displayed on the referral UI
+        type: string
       skills:
         type: array
         items:
@@ -103,14 +121,12 @@ definitions:
           not required to have all the attributes defined either. It is also
           possible for applications to provide additional keyword “tags” to help
           improve query relevance.
-      info:
-        $ref: '#/definitions/AppInfo'
     type: object
   ReferralItem:
     description: 'Summary and relevance of a referral'
     properties:
       item:
-        $ref: '#/definitions/AppInfo'
+        $ref: '#/definitions/Application'
       score:
         format: float
         type: number
@@ -123,35 +139,6 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/ReferralItem'
-  AppInfo:
-    properties:
-      description:
-        description: >-
-          Additional description of the application on the referral UI if we
-          don’t want our users to be redirected out of the application to see
-          this information
-        type: string
-      id:
-        description: Unique application ID within the database
-        format: int64
-        type: integer
-      locale:
-        description: ISO 639 Locale Code (ie. “en-us”)
-        type: string
-      platform_id:
-        description: >-
-          Platform specific unique identifier for the application. This would be
-          package name for Android, bundle ID for iOS and URL for web-based
-          applications.
-        type: string
-      title:
-        description: Title of the application to be displayed on the referral UI
-        type: string
-    required:
-      - id
-      - platform_id
-      - title
-    type: object
 securityDefinitions:
   ApiKey:
     type: apiKey

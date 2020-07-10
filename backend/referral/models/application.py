@@ -1,11 +1,10 @@
 # coding: utf-8
 
-from __future__ import absolute_import, annotations
+from __future__ import absolute_import
 from datetime import date, datetime  # noqa: F401
 
 from typing import List, Dict  # noqa: F401
 
-from models import *
 from models.base_model_ import Model
 from common import util
 
@@ -16,26 +15,41 @@ class Application(Model):
     Do not edit the class manually.
     """
 
-    def __init__(self, skills: List[str]=None, summary: AppInfo=None):  # noqa: E501
+    def __init__(self, description: str=None, locale: str=None, platform_id: str=None, title: str=None, skills: List[str]=None):  # noqa: E501
         """Application - a model defined in Swagger
 
+        :param description: The description of this Application.  # noqa: E501
+        :type description: str
+        :param locale: The locale of this Application.  # noqa: E501
+        :type locale: str
+        :param platform_id: The platform_id of this Application.  # noqa: E501
+        :type platform_id: str
+        :param title: The title of this Application.  # noqa: E501
+        :type title: str
         :param skills: The skills of this Application.  # noqa: E501
         :type skills: List[str]
-        :param summary: The summary of this Application.  # noqa: E501
-        :type summary: AppInfo
         """
         self.swagger_types = {
-            'skills': List[str],
-            'summary': AppInfo
+            'description': str,
+            'locale': str,
+            'platform_id': str,
+            'title': str,
+            'skills': List[str]
         }
 
         self.attribute_map = {
-            'skills': 'skills',
-            'summary': 'summary'
+            'description': 'description',
+            'locale': 'locale',
+            'platform_id': 'platform_id',
+            'title': 'title',
+            'skills': 'skills'
         }
 
+        self._description = description
+        self._locale = locale
+        self._platform_id = platform_id
+        self._title = title
         self._skills = skills
-        self._summary = summary
 
     @classmethod
     def from_dict(cls, dikt) -> 'Application':
@@ -47,6 +61,98 @@ class Application(Model):
         :rtype: Application
         """
         return util.deserialize_model(dikt, cls)
+
+    @property
+    def description(self) -> str:
+        """Gets the description of this Application.
+
+        Additional description of the application on the referral UI if we don’t want our users to be redirected out of the application to see this information  # noqa: E501
+
+        :return: The description of this Application.
+        :rtype: str
+        """
+        return self._description
+
+    @description.setter
+    def description(self, description: str):
+        """Sets the description of this Application.
+
+        Additional description of the application on the referral UI if we don’t want our users to be redirected out of the application to see this information  # noqa: E501
+
+        :param description: The description of this Application.
+        :type description: str
+        """
+
+        self._description = description
+
+    @property
+    def locale(self) -> str:
+        """Gets the locale of this Application.
+
+        ISO 639 Locale Code (ie. “en-us”)  # noqa: E501
+
+        :return: The locale of this Application.
+        :rtype: str
+        """
+        return self._locale
+
+    @locale.setter
+    def locale(self, locale: str):
+        """Sets the locale of this Application.
+
+        ISO 639 Locale Code (ie. “en-us”)  # noqa: E501
+
+        :param locale: The locale of this Application.
+        :type locale: str
+        """
+
+        self._locale = locale
+
+    @property
+    def platform_id(self) -> str:
+        """Gets the platform_id of this Application.
+
+        Platform specific unique identifier for the application. This would be package name for Android, bundle ID for iOS and URL for web-based applications.  # noqa: E501
+
+        :return: The platform_id of this Application.
+        :rtype: str
+        """
+        return self._platform_id
+
+    @platform_id.setter
+    def platform_id(self, platform_id: str):
+        """Sets the platform_id of this Application.
+
+        Platform specific unique identifier for the application. This would be package name for Android, bundle ID for iOS and URL for web-based applications.  # noqa: E501
+
+        :param platform_id: The platform_id of this Application.
+        :type platform_id: str
+        """
+
+        self._platform_id = platform_id
+
+    @property
+    def title(self) -> str:
+        """Gets the title of this Application.
+
+        Title of the application to be displayed on the referral UI  # noqa: E501
+
+        :return: The title of this Application.
+        :rtype: str
+        """
+        return self._title
+
+    @title.setter
+    def title(self, title: str):
+        """Sets the title of this Application.
+
+        Title of the application to be displayed on the referral UI  # noqa: E501
+
+        :param title: The title of this Application.
+        :type title: str
+        """
+
+        self._title = title
 
     @property
     def skills(self) -> List[str]:
@@ -70,24 +176,3 @@ class Application(Model):
         """
 
         self._skills = skills
-
-    @property
-    def summary(self) -> AppInfo:
-        """Gets the summary of this Application.
-
-
-        :return: The summary of this Application.
-        :rtype: AppInfo
-        """
-        return self._summary
-
-    @summary.setter
-    def summary(self, summary: AppInfo):
-        """Sets the summary of this Application.
-
-
-        :param summary: The summary of this Application.
-        :type summary: AppInfo
-        """
-
-        self._summary = summary

@@ -1,12 +1,11 @@
 # coding: utf-8
 
-from __future__ import absolute_import, annotations
+from __future__ import absolute_import
 from datetime import date, datetime  # noqa: F401
 
 from typing import List, Dict  # noqa: F401
 
-from models import *
-from models.app_info import AppInfo
+from models.application import Application
 from models.base_model_ import Model
 from common import util
 
@@ -17,16 +16,16 @@ class ReferralItem(Model):
     Do not edit the class manually.
     """
 
-    def __init__(self, item: AppInfo=None, score: float=None):  # noqa: E501
-        """MatchingItem - a model defined in Swagger
+    def __init__(self, item: Application=None, score: float=None):  # noqa: E501
+        """ReferralItem - a model defined in Swagger
 
-        :param item: The item of this MatchingItem.  # noqa: E501
-        :type item: AppInfo
-        :param score: The score of this MatchingItem.  # noqa: E501
+        :param item: The item of this ReferralItem.  # noqa: E501
+        :type item: Application
+        :param score: The score of this ReferralItem.  # noqa: E501
         :type score: float
         """
         self.swagger_types = {
-            'item': AppInfo,
+            'item': Application,
             'score': float
         }
 
@@ -44,48 +43,48 @@ class ReferralItem(Model):
 
         :param dikt: A dict.
         :type: dict
-        :return: The MatchingItem of this MatchingItem.  # noqa: E501
+        :return: The ReferralItem of this ReferralItem.  # noqa: E501
         :rtype: ReferralItem
         """
         return util.deserialize_model(dikt, cls)
 
     @property
-    def item(self) -> AppInfo:
-        """Gets the item of this MatchingItem.
+    def item(self) -> Application:
+        """Gets the item of this ReferralItem.
 
 
-        :return: The item of this MatchingItem.
-        :rtype: AppInfo
+        :return: The item of this ReferralItem.
+        :rtype: Application
         """
         return self._item
 
     @item.setter
-    def item(self, item: AppInfo):
-        """Sets the item of this MatchingItem.
+    def item(self, item: Application):
+        """Sets the item of this ReferralItem.
 
 
-        :param item: The item of this MatchingItem.
-        :type item: AppInfo
+        :param item: The item of this ReferralItem.
+        :type item: Application
         """
 
         self._item = item
 
     @property
     def score(self) -> float:
-        """Gets the score of this MatchingItem.
+        """Gets the score of this ReferralItem.
 
 
-        :return: The score of this MatchingItem.
+        :return: The score of this ReferralItem.
         :rtype: float
         """
         return self._score
 
     @score.setter
     def score(self, score: float):
-        """Sets the score of this MatchingItem.
+        """Sets the score of this ReferralItem.
 
 
-        :param score: The score of this MatchingItem.
+        :param score: The score of this ReferralItem.
         :type score: float
         """
 
