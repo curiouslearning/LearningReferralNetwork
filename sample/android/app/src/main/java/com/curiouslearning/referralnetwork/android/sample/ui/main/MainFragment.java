@@ -3,45 +3,59 @@ package com.curiouslearning.referralnetwork.android.sample.ui.main;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
+//import com.android.volley.Request;
+//import com.android.volley.RequestQueue;
+//import com.android.volley.VolleyError;
+//import com.android.volley.toolbox.JsonObjectRequest;
+//import com.android.volley.toolbox.Volley;
 import com.curiouslearning.referralnetwork.android.sample.R;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.curiouslearning.referralnetwork.android.sample.referral.ReferralApi;
+import com.curiouslearning.referralnetwork.android.sample.referral.model.ApplicationInfo;
+import com.curiouslearning.referralnetwork.android.sample.referral.model.ReferralItem;
+import com.curiouslearning.referralnetwork.android.sample.referral.model.ReferralRequest;
+import com.curiouslearning.referralnetwork.android.sample.referral.model.ReferralResponse;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.ryanharter.auto.value.gson.AutoValueGsonTypeAdapterFactory;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.List;
 
 public class MainFragment extends Fragment {
 
     private static final String TAG = "MainFragment";
 
-    private static final String DEBUG_COLLECTION = "debug";
+    private static final String REFERRAL_URL = "https://referral-gateway-hj2cd4bxba-de.a.run.app";
 
     private MainViewModel mViewModel;
 
-    private EditText mProgressEditText;
+    private Spinner mLocaleDropdown;
     private TextView mTitleText;
 
     private FirebaseFirestore mFirestore;
@@ -61,78 +75,134 @@ public class MainFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.main_fragment, container, false);
 
-        mFirestore = FirebaseFirestore.getInstance();
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Create channel to show notifications.
-            String channelId  = getString(R.string.default_notification_channel_id);
-            String channelName = getString(R.string.default_notification_channel_name);
-            NotificationManager notificationManager =
-                    getActivity().getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(new NotificationChannel(channelId,
-                    channelName, NotificationManager.IMPORTANCE_LOW));
-        }
-
         mTitleText = (TextView) view.findViewById(R.id.title);
-        mProgressEditText = (EditText) view.findViewById(R.id.progress_field);
-        Button mUpdateButton = (Button) view.findViewById(R.id.update_button);
+        mLocaleDropdown = (Spinner) view.findViewById(R.id.locale_selection);
+        final TextView textView = (TextView) view.findViewById(R.id.referral_result);
+        Button mReferralButton = (Button) view.findViewById(R.id.referral_button);
 
-        mUpdateButton.setOnClickListener(new View.OnClickListener() {
+        //create a list of items for the spinner.
+        String[] items = new String[]{"en-us", "hi-IN"};
+        //create an adapter to describe how the items are displayed, adapters are used in several places in android.
+        //There are multiple variations of this, but this is the basic variant.
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(view.getContext(), android.R.layout.simple_spinner_dropdown_item, items);
+        //set the spinners adapter to the previously created one.
+        mLocaleDropdown.setAdapter(adapter);
+
+        mReferralButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Map<String, Object> map = new HashMap<>();
+                // Instantiate the RequestQueue. (Volley - obsolete)
+                // RequestQueue queue = Volley.newRequestQueue(v.getContext());
+                // TODO - DO NOT COMMIT WITH KEY!!
+                String locale = mLocaleDropdown.getSelectedItem().toString();
 
-                Date date = new Date();
-                map.put("timestamp", date.toString());
+                // Register type adapter so we can use AutoValue with Gson
+                GsonConverterFactory gsonConverterFactory = GsonConverterFactory.create(
+                        new GsonBuilder()
+                                .registerTypeAdapterFactory(new AutoValueGsonTypeAdapterFactory())
+                                .setLenient()
+                                .create());
 
-                // Add a new document with a generated ID
-                mFirestore.collection(DEBUG_COLLECTION)
-                        .document(mProgressEditText.getText().toString())
-                        .set(map)
-                        .addOnCompleteListener(getActivity(), new OnCompleteListener<Void>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Void> task) {
-                                Log.d(TAG, "write:onComplete");
-                                if (!task.isSuccessful()) {
-                                    // TODO - figure out how to get application context so we can
-                                    //   display a Toast here for failure
-                                    Log.w(TAG, "write:onComplete:failed", task.getException());
-                                }
+                // OkHttp Client interceptor to log request and response data
+                HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+                logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+                OkHttpClient httpClient = new OkHttpClient.Builder()
+                        .addInterceptor(logging)
+                        .build();
+
+                Retrofit retrofit = new Retrofit.Builder()
+                        .baseUrl(REFERRAL_URL)
+                        .addConverterFactory(gsonConverterFactory)
+                        .client(httpClient)
+                        .build();
+
+                ReferralApi api = retrofit.create(ReferralApi.class);
+                ReferralRequest body = ReferralRequest.builder()
+                        .setLocale("en-us")
+                        .setPackageName(v.getContext().getPackageName())
+                        .build();
+
+                Call<ReferralResponse> call = api.requestReferral(body, "AIzaSyCeeighDiDSqLHLfX2eTLg_s26iRpmdHyc");
+                call.enqueue(new Callback<ReferralResponse>() {
+                    @Override
+                    public void onResponse(Call<ReferralResponse> call, Response<ReferralResponse> response) {
+                        if (response.isSuccessful()) {
+                            Log.i(TAG, "post submitted to API." + response.body().toString());
+                            List<ReferralItem> referralItemList = response.body().items;
+                            for (ReferralItem item : referralItemList) {
+                                Log.i(TAG, item.toString());
                             }
-                        });
+                        } else {
+                            Log.e(TAG, response.errorBody().toString());
+                        }
+                    }
 
-                mProgressEditText.setText("");
-                Toast.makeText(getActivity(), "Writing to Firestore", Toast.LENGTH_SHORT).show();
+                    @Override
+                    public void onFailure(Call<ReferralResponse> call, Throwable t) {
+                        t.printStackTrace();
+                    }
+                });
+
+                // volley code
+//                JSONObject requestBody = new JSONObject();
+//                try {
+//                    requestBody.put("package_name", "com.akiliandme.curiousreader.differentplaces");
+//                    requestBody.put("locale", locale);
+//                } catch (JSONException e) {
+//                    textView.setText("Unable to create request body: " + e.getMessage());
+//                    return;
+//                }
+//
+//                JsonObjectRequest referralRequest = new JsonObjectRequest
+//                        (Request.Method.POST, REFERRAL_URL, requestBody, new Response.Listener<JSONObject>() {
+//
+//                            @Override
+//                            public void onResponse(JSONObject response) {
+//                                // Pretty print JSON for now
+//                                Gson gson = new GsonBuilder()
+//                                        .registerTypeAdapterFactory(
+//                                                new AutoValueGsonTypeAdapterFactory())
+//                                        .create();
+//                                ApplicationInfo app = gson.fromJson(response.toString(), ApplicationInfo.class);
+//                                textView.setText(app.toString());
+//                            }
+//                        }, new Response.ErrorListener() {
+//
+//                            @Override
+//                            public void onErrorResponse(VolleyError error) {
+//                                textView.setText("That didn't work!" + error.getMessage());
+//                            }
+//                        });
+//
+//                // Add the request to the RequestQueue.
+//                queue.add(referralRequest);
+
+
+//                Map<String, Object> map = new HashMap<>();
+//
+//                Date date = new Date();
+//                map.put("timestamp", date.toString());
+//
+//                // Add a new document with a generated ID
+//                mFirestore.collection(DEBUG_COLLECTION)
+//                        .document(mProgressEditText.getText().toString())
+//                        .set(map)
+//                        .addOnCompleteListener(getActivity(), new OnCompleteListener<Void>() {
+//                            @Override
+//                            public void onComplete(@NonNull Task<Void> task) {
+//                                Log.d(TAG, "write:onComplete");
+//                                if (!task.isSuccessful()) {
+//                                    // TODO - figure out how to get application context so we can
+//                                    //   display a Toast here for failure
+//                                    Log.w(TAG, "write:onComplete:failed", task.getException());
+//                                }
+//                            }
+//                        });
+//
+//                mProgressEditText.setText("");
+//                Toast.makeText(getActivity(), "Writing to Firestore", Toast.LENGTH_SHORT).show();
             }
         });
-
-        Button logTokenButton = view.findViewById(R.id.token_button);
-        logTokenButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Get token
-                // [START retrieve_current_token]
-                FirebaseInstanceId.getInstance().getInstanceId()
-                        .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                            @Override
-                            public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                                if (!task.isSuccessful()) {
-                                    Log.w(TAG, "getInstanceId failed", task.getException());
-                                    return;
-                                }
-
-                                // Get new Instance ID token
-                                String token = task.getResult().getToken();
-
-                                // Log and toast
-                                Log.d(TAG, token);
-                                Toast.makeText(getActivity(), token, Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                // [END retrieve_current_token]
-            }
-        });
-
         return view;
     }
 

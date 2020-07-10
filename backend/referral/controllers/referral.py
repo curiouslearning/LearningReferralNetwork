@@ -51,12 +51,6 @@ def make_recommendation(body):  # noqa: E501
     try:
         apps_ref = db.collection(Config.APP_DB_COLLECTION)
 
-        # Fetch the application info of the caller
-        db_query = apps_ref.where('platform_id', '==', body.package_name)
-
-        # Execute query
-        apps = db_query.limit(body.max_results).stream()
-
         # TODO - Cloud Firestore provides limited support for logical OR queries.
         #   The in and array-contains-any operators support a logical OR of up to
         #   10 equality (==) or array-contains conditions on a single field. For
@@ -65,16 +59,12 @@ def make_recommendation(body):  # noqa: E501
 
         # TODO - Move this out to a separate recommendation engine package
 
-        # db_query = apps_ref.where('locale', '==', locale)
+        # For this demo, we are simply looking or other apps with the same locale.
+        # Note that the storage of locale in the database may change
+        db_query = apps_ref.where('locale', '==', body.locale)
 
-        # # List of search terms to pass into Firestore query
-        # query_terms = []
-        # if skills:
-        #     query_terms = skills.split(',')
-        #     db_query = db_query.where(u'skills', u'array_contains_any', query_terms)
-        #
-        # # Execute query
-        # apps = db_query.limit(limit).stream()
+        # Execute query
+        apps = db_query.limit(body.max_results).stream()
 
         for app in apps:
             # Need to integrate Firestore client with Summary model

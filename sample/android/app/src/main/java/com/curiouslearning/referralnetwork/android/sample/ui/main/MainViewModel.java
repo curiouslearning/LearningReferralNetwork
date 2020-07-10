@@ -25,33 +25,7 @@ public class MainViewModel extends ViewModel {
 
     public LiveData<String> getValue() {
         if (mValue == null) {
-            mValue = new MutableLiveData<String>();
-
-            // Query listener registration is only removed when the main
-            // activity is finished (onCleared)
-            FirebaseFirestore.getInstance()
-                    .collection(APPS_COLLECTION)
-                    .whereEqualTo("package_name", "com.android.app")
-                    .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                        @Override
-                        public void onEvent(@Nullable QuerySnapshot snapshots,
-                                            @Nullable FirebaseFirestoreException e) {
-
-                            if (e != null || snapshots == null) {
-                                Log.w(TAG, "Listen failed.", e);
-                                return;
-                            }
-                            List<DocumentSnapshot> documents = snapshots.getDocuments();
-                            if (documents.size() > 0) {
-                                Object title = documents.get(0).get("title");
-                                if (title == null) {
-                                    Log.w(TAG, "Field 'title' not found in document");
-                                    return;
-                                }
-                                mValue.postValue(title.toString());
-                            }
-                        }
-                    });
+            mValue = new MutableLiveData<String>("Select a language");
         }
         return mValue;
     }
