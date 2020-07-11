@@ -8,6 +8,8 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
@@ -45,6 +47,7 @@ import com.ryanharter.auto.value.gson.AutoValueGsonTypeAdapterFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainFragment extends Fragment {
@@ -53,10 +56,16 @@ public class MainFragment extends Fragment {
 
     private static final String REFERRAL_URL = "https://referral-gateway-hj2cd4bxba-de.a.run.app";
 
+    private List<ReferralItem> mReferrals;
+
     private MainViewModel mViewModel;
 
     private Spinner mLocaleDropdown;
     private TextView mTitleText;
+
+    private RecyclerView.Adapter mReferralResultAdapter;
+    private RecyclerView mReferralResultsView;
+    private RecyclerView.LayoutManager layoutManager;
 
     private FirebaseFirestore mFirestore;
 
@@ -77,7 +86,7 @@ public class MainFragment extends Fragment {
 
         mTitleText = (TextView) view.findViewById(R.id.title);
         mLocaleDropdown = (Spinner) view.findViewById(R.id.locale_selection);
-        final TextView textView = (TextView) view.findViewById(R.id.referral_result);
+        mReferralResultsView = (RecyclerView) view.findViewById(R.id.referral_result);
         Button mReferralButton = (Button) view.findViewById(R.id.referral_button);
 
         //create a list of items for the spinner.
@@ -88,6 +97,15 @@ public class MainFragment extends Fragment {
         //set the spinners adapter to the previously created one.
         mLocaleDropdown.setAdapter(adapter);
 
+        // Recycler view for displaying referral results
+        // use a linear layout manager
+        mReferrals = new ArrayList<>();
+        layoutManager = new LinearLayoutManager(view.getContext());
+        mReferralResultsView.setLayoutManager(layoutManager);
+        mReferralResultAdapter = new ReferralResultAdapter(mReferrals);
+        mReferralResultsView.setAdapter(mReferralResultAdapter);
+
+        // Button to fetch referrals
         mReferralButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -128,10 +146,13 @@ public class MainFragment extends Fragment {
                     public void onResponse(Call<ReferralResponse> call, Response<ReferralResponse> response) {
                         if (response.isSuccessful()) {
                             Log.i(TAG, "post submitted to API." + response.body().toString());
-                            List<ReferralItem> referralItemList = response.body().items;
-                            for (ReferralItem item : referralItemList) {
+                            mReferrals.clear();
+                            for (ReferralItem item : response.body().items) {
+                                mReferrals.add(item);
                                 Log.i(TAG, item.toString());
                             }
+                            mReferralResultAdapter.notifyDataSetChanged();
+                            Log.d(TAG, "Number of referrals returned: " + mReferralResultAdapter.getItemCount());
                         } else {
                             Log.e(TAG, response.errorBody().toString());
                         }
