@@ -32,6 +32,7 @@ import android.widget.TextView;
 //import com.android.volley.VolleyError;
 //import com.android.volley.toolbox.JsonObjectRequest;
 //import com.android.volley.toolbox.Volley;
+import com.curiouslearning.referralnetwork.android.sample.BuildConfig;
 import com.curiouslearning.referralnetwork.android.sample.R;
 
 import com.curiouslearning.referralnetwork.android.sample.referral.ReferralApi;
@@ -111,7 +112,7 @@ public class MainFragment extends Fragment {
             public void onClick(View v) {
                 // Instantiate the RequestQueue. (Volley - obsolete)
                 // RequestQueue queue = Volley.newRequestQueue(v.getContext());
-                // TODO - DO NOT COMMIT WITH KEY!!
+
                 String locale = mLocaleDropdown.getSelectedItem().toString();
 
                 // Register type adapter so we can use AutoValue with Gson
@@ -140,7 +141,7 @@ public class MainFragment extends Fragment {
                         .setPackageName(v.getContext().getPackageName())
                         .build();
 
-                Call<ReferralResponse> call = api.requestReferral(body, "AIzaSyCeeighDiDSqLHLfX2eTLg_s26iRpmdHyc");
+                Call<ReferralResponse> call = api.requestReferral(body, BuildConfig.REFERRAL_API_KEY);
                 call.enqueue(new Callback<ReferralResponse>() {
                     @Override
                     public void onResponse(Call<ReferralResponse> call, Response<ReferralResponse> response) {
