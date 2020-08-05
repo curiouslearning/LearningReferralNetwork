@@ -29,11 +29,6 @@ import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-//import com.android.volley.Request;
-//import com.android.volley.RequestQueue;
-//import com.android.volley.VolleyError;
-//import com.android.volley.toolbox.JsonObjectRequest;
-//import com.android.volley.toolbox.Volley;
 import com.curiouslearning.referralnetwork.android.sample.BuildConfig;
 import com.curiouslearning.referralnetwork.android.sample.R;
 
@@ -131,9 +126,6 @@ public class MainFragment extends Fragment {
         mReferralButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Instantiate the RequestQueue. (Volley - obsolete)
-                // RequestQueue queue = Volley.newRequestQueue(v.getContext());
-
                 String locale = mLocaleDropdown.getSelectedItem().toString();
 
                 // Register type adapter so we can use AutoValue with Gson
@@ -186,65 +178,6 @@ public class MainFragment extends Fragment {
                         t.printStackTrace();
                     }
                 });
-
-                // volley code
-//                JSONObject requestBody = new JSONObject();
-//                try {
-//                    requestBody.put("package_name", "com.akiliandme.curiousreader.differentplaces");
-//                    requestBody.put("locale", locale);
-//                } catch (JSONException e) {
-//                    textView.setText("Unable to create request body: " + e.getMessage());
-//                    return;
-//                }
-//
-//                JsonObjectRequest referralRequest = new JsonObjectRequest
-//                        (Request.Method.POST, REFERRAL_URL, requestBody, new Response.Listener<JSONObject>() {
-//
-//                            @Override
-//                            public void onResponse(JSONObject response) {
-//                                // Pretty print JSON for now
-//                                Gson gson = new GsonBuilder()
-//                                        .registerTypeAdapterFactory(
-//                                                new AutoValueGsonTypeAdapterFactory())
-//                                        .create();
-//                                ApplicationInfo app = gson.fromJson(response.toString(), ApplicationInfo.class);
-//                                textView.setText(app.toString());
-//                            }
-//                        }, new Response.ErrorListener() {
-//
-//                            @Override
-//                            public void onErrorResponse(VolleyError error) {
-//                                textView.setText("That didn't work!" + error.getMessage());
-//                            }
-//                        });
-//
-//                // Add the request to the RequestQueue.
-//                queue.add(referralRequest);
-
-
-//                Map<String, Object> map = new HashMap<>();
-//
-//                Date date = new Date();
-//                map.put("timestamp", date.toString());
-//
-//                // Add a new document with a generated ID
-//                mFirestore.collection(DEBUG_COLLECTION)
-//                        .document(mProgressEditText.getText().toString())
-//                        .set(map)
-//                        .addOnCompleteListener(getActivity(), new OnCompleteListener<Void>() {
-//                            @Override
-//                            public void onComplete(@NonNull Task<Void> task) {
-//                                Log.d(TAG, "write:onComplete");
-//                                if (!task.isSuccessful()) {
-//                                    // TODO - figure out how to get application context so we can
-//                                    //   display a Toast here for failure
-//                                    Log.w(TAG, "write:onComplete:failed", task.getException());
-//                                }
-//                            }
-//                        });
-//
-//                mProgressEditText.setText("");
-//                Toast.makeText(getActivity(), "Writing to Firestore", Toast.LENGTH_SHORT).show();
             }
         });
         return view;
