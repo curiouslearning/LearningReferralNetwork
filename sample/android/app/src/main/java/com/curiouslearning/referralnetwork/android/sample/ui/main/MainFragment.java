@@ -3,6 +3,8 @@ package com.curiouslearning.referralnetwork.android.sample.ui.main;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -40,15 +42,12 @@ import com.curiouslearning.referralnetwork.android.sample.referral.model.Applica
 import com.curiouslearning.referralnetwork.android.sample.referral.model.ReferralItem;
 import com.curiouslearning.referralnetwork.android.sample.referral.model.ReferralRequest;
 import com.curiouslearning.referralnetwork.android.sample.referral.model.ReferralResponse;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.gson.Gson;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.gson.GsonBuilder;
 import com.ryanharter.auto.value.gson.AutoValueGsonTypeAdapterFactory;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 public class MainFragment extends Fragment {
@@ -68,7 +67,7 @@ public class MainFragment extends Fragment {
     private RecyclerView mReferralResultsView;
     private RecyclerView.LayoutManager layoutManager;
 
-    private FirebaseFirestore mFirestore;
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     public static MainFragment newInstance() {
         return new MainFragment();
@@ -85,6 +84,10 @@ public class MainFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.main_fragment, container, false);
 
+        // Obtain the FirebaseAnalytics instance.
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(view.getContext());
+
+        // UI
         mTitleText = (TextView) view.findViewById(R.id.title);
         mLocaleDropdown = (Spinner) view.findViewById(R.id.locale_selection);
         mReferralResultsView = (RecyclerView) view.findViewById(R.id.referral_result);
@@ -103,7 +106,25 @@ public class MainFragment extends Fragment {
         mReferrals = new ArrayList<>();
         layoutManager = new LinearLayoutManager(view.getContext());
         mReferralResultsView.setLayoutManager(layoutManager);
-        mReferralResultAdapter = new ReferralResultAdapter(mReferrals);
+        // TODO - make this class implements OnReferralClickListener
+        mReferralResultAdapter = new ReferralResultAdapter(mReferrals, new ReferralResultAdapter.OnClickListener() {
+            @Override
+            public void onClick(ApplicationInfo appInfo) {
+                // Send analytic event to Firebase
+                Bundle bundle = new Bundle();
+                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, appInfo.platformId());
+                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, appInfo.title());
+                bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "referral");
+                mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+
+                // Link to Playstore using package name from referral result
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(
+                        "https://play.google.com/store/apps/details?id=" + appInfo.platformId()));
+                intent.setPackage("com.android.vending");
+                startActivity(intent);
+            }
+        });
         mReferralResultsView.setAdapter(mReferralResultAdapter);
 
         // Button to fetch referrals
@@ -147,13 +168,14 @@ public class MainFragment extends Fragment {
                     public void onResponse(Call<ReferralResponse> call, Response<ReferralResponse> response) {
                         if (response.isSuccessful()) {
                             Log.i(TAG, "post submitted to API." + response.body().toString());
+
+                            // Update recycler view
                             mReferrals.clear();
                             for (ReferralItem item : response.body().items) {
                                 mReferrals.add(item);
                                 Log.i(TAG, item.toString());
                             }
                             mReferralResultAdapter.notifyDataSetChanged();
-                            Log.d(TAG, "Number of referrals returned: " + mReferralResultAdapter.getItemCount());
                         } else {
                             Log.e(TAG, response.errorBody().toString());
                         }

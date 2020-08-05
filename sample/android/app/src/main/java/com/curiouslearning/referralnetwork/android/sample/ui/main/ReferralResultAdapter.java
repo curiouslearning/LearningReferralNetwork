@@ -1,8 +1,5 @@
 package com.curiouslearning.referralnetwork.android.sample.ui.main;
 
-import android.content.Intent;
-import android.net.Uri;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,16 +13,23 @@ import java.util.List;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+/** Recycler view adapter to display app referrals in a list */
 public class ReferralResultAdapter extends RecyclerView.Adapter<ReferralResultAdapter.ReferralViewHolder> {
     private static final String TAG = "ReferralResultAdapter";
 
     private List<ReferralItem> mReferrals;
+    private OnClickListener mOnClickListener;
 
-    // Provide a reference to the views for each data item
+    // On click listener callback interface for the adapter
+    public interface OnClickListener {
+        void onClick(ApplicationInfo appInfo);
+    }
+
+    // Provide a reference to the views for each referral item
     // Complex data items may need more than one view per item, and
     // you provide access to all the views for a data item in a view holder
     public static class ReferralViewHolder extends RecyclerView.ViewHolder {
-        // each data item is just a string in this case
+        // TODO - each referral item is just the package name string for the demo
         public TextView textView;
         public ReferralViewHolder(View v) {
             super(v);
@@ -34,8 +38,9 @@ public class ReferralResultAdapter extends RecyclerView.Adapter<ReferralResultAd
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-    public ReferralResultAdapter(List<ReferralItem> referrals) {
+    public ReferralResultAdapter(List<ReferralItem> referrals, OnClickListener listener) {
         mReferrals = referrals;
+        mOnClickListener = listener;
     }
 
     // Create new views (invoked by the layout manager)
@@ -59,12 +64,7 @@ public class ReferralResultAdapter extends RecyclerView.Adapter<ReferralResultAd
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Link to Playstore using package name from referral result
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setData(Uri.parse(
-                        "https://play.google.com/store/apps/details?id=" + app.platformId()));
-                intent.setPackage("com.android.vending");
-                v.getContext().startActivity(intent);
+                mOnClickListener.onClick(app);
             }
         });
     }
