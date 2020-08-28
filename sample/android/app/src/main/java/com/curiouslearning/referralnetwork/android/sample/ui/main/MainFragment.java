@@ -92,7 +92,7 @@ public class MainFragment extends Fragment {
         String[] items = new String[]{"en-us", "hi-IN"};
         //create an adapter to describe how the items are displayed, adapters are used in several places in android.
         //There are multiple variations of this, but this is the basic variant.
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(view.getContext(), android.R.layout.simple_spinner_dropdown_item, items);
+        final ArrayAdapter<String> adapter = new ArrayAdapter<>(view.getContext(), android.R.layout.simple_spinner_dropdown_item, items);
         //set the spinners adapter to the previously created one.
         mLocaleDropdown.setAdapter(adapter);
 
@@ -101,6 +101,7 @@ public class MainFragment extends Fragment {
         mReferrals = new ArrayList<>();
         layoutManager = new LinearLayoutManager(view.getContext());
         mReferralResultsView.setLayoutManager(layoutManager);
+
         // TODO - make this class implements OnReferralClickListener
         mReferralResultAdapter = new ReferralResultAdapter(mReferrals, new ReferralResultAdapter.OnClickListener() {
             @Override
@@ -126,7 +127,7 @@ public class MainFragment extends Fragment {
         mReferralButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String locale = mLocaleDropdown.getSelectedItem().toString();
+                String selectedLocale = mLocaleDropdown.getSelectedItem().toString();
 
                 // Register type adapter so we can use AutoValue with Gson
                 GsonConverterFactory gsonConverterFactory = GsonConverterFactory.create(
@@ -150,7 +151,7 @@ public class MainFragment extends Fragment {
 
                 ReferralApi api = retrofit.create(ReferralApi.class);
                 ReferralRequest body = ReferralRequest.builder()
-                        .setLocale("en-us")
+                        .setLocale(selectedLocale)
                         .setPackageName(v.getContext().getPackageName())
                         .build();
 
