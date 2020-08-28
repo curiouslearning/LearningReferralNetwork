@@ -1,6 +1,5 @@
 package com.curiouslearning.referralnetwork.android.sample.referral;
 
-import com.curiouslearning.referralnetwork.android.sample.referral.model.ReferralItem;
 import com.curiouslearning.referralnetwork.android.sample.referral.model.ReferralRequest;
 import com.curiouslearning.referralnetwork.android.sample.referral.model.ReferralResponse;
 

@@ -42,14 +42,14 @@ import com.google.gson.GsonBuilder;
 import com.ryanharter.auto.value.gson.AutoValueGsonTypeAdapterFactory;
 
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 public class MainFragment extends Fragment {
 
     private static final String TAG = "MainFragment";
 
-    private static final String REFERRAL_URL = "https://referral-gateway-hj2cd4bxba-de.a.run.app";
+    private static final String UTM_SOURCE = "lrn";
+    private static final String REFERRAL_API_ENDPOINT = "https://referral-gateway-hj2cd4bxba-de.a.run.app";
 
     private List<ReferralItem> mReferrals;
 
@@ -112,10 +112,10 @@ public class MainFragment extends Fragment {
                 bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "referral");
                 mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
 
+                Log.d(TAG, "Package name: " + getContext().getPackageName());
                 // Link to Playstore using package name from referral result
                 Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setData(Uri.parse(
-                        "https://play.google.com/store/apps/details?id=" + appInfo.platformId()));
+                intent.setData(Uri.parse(String.format("https://play.google.com/store/apps/details?utm_source=%s&utm_campaign=%s&id=%s", UTM_SOURCE, getContext().getPackageName(), appInfo.platformId())));
                 intent.setPackage("com.android.vending");
                 startActivity(intent);
             }
@@ -143,7 +143,7 @@ public class MainFragment extends Fragment {
                         .build();
 
                 Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl(REFERRAL_URL)
+                        .baseUrl(REFERRAL_API_ENDPOINT)
                         .addConverterFactory(gsonConverterFactory)
                         .client(httpClient)
                         .build();
