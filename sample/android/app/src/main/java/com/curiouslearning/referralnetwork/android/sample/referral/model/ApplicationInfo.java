@@ -13,6 +13,8 @@ public abstract class ApplicationInfo {
 
     @SerializedName("platform_id")
     public abstract String platformId();
+    @SerializedName("icon_url")
+    public abstract String iconUrl();
 
     public abstract String locale();
     public abstract String title();

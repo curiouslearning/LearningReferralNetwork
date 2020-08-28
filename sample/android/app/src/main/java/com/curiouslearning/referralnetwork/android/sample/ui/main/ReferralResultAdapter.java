@@ -1,13 +1,16 @@
 package com.curiouslearning.referralnetwork.android.sample.ui.main;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.curiouslearning.referralnetwork.android.sample.R;
 import com.curiouslearning.referralnetwork.android.sample.referral.model.ApplicationInfo;
 import com.curiouslearning.referralnetwork.android.sample.referral.model.ReferralItem;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -31,9 +34,13 @@ public class ReferralResultAdapter extends RecyclerView.Adapter<ReferralResultAd
     public static class ReferralViewHolder extends RecyclerView.ViewHolder {
         // TODO - each referral item is just the package name string for the demo
         public TextView textView;
+        public ImageView iconImageView;
+        public Context context;
         public ReferralViewHolder(View v) {
             super(v);
-            textView = (TextView) v.findViewById(R.id.referral_app_title);;
+            textView = (TextView) v.findViewById(R.id.referral_app_title);
+            iconImageView = (ImageView) v.findViewById(R.id.referral_app_icon);
+            context = v.getContext();
         }
     }
 
@@ -50,8 +57,7 @@ public class ReferralResultAdapter extends RecyclerView.Adapter<ReferralResultAd
         // create a new view
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.referral_result_view, parent, false);
-        ReferralViewHolder vh = new ReferralViewHolder(v);
-        return vh;
+        return new ReferralViewHolder(v);
     }
 
     // Replace the contents of a view (invoked by the layout manager)
@@ -61,6 +67,7 @@ public class ReferralResultAdapter extends RecyclerView.Adapter<ReferralResultAd
         // - replace the contents of the view with that element
         final ApplicationInfo app = mReferrals.get(position).item();
         holder.textView.setText(app.title());
+        Picasso.get().load(app.iconUrl()).fit().into(holder.iconImageView);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

@@ -52,4 +52,6 @@ dependencies {
     annotationProcessor 'com.ryanharter.auto.value:auto-value-gson:0.3.1'
     compileOnly 'com.jakewharton.auto.value:auto-value-annotations:1.4'
     //compileOnly 'org.glassfish:javax.annotation:10.0-b28'
+
+    implementation 'com.squareup.picasso:picasso:2.71828'
 }
