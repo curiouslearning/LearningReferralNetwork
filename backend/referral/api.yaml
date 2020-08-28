@@ -108,6 +108,9 @@ definitions:
       title:
         description: Title of the application to be displayed on the referral UI
         type: string
+      icon_url:
+        description: URL path of the application icon image
+        type: string
       skills:
         type: array
         items:
