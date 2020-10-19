@@ -8,8 +8,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.curiouslearning.referralnetwork.android.sample.R;
-import com.curiouslearning.referralnetwork.android.sample.referral.model.ApplicationInfo;
-import com.curiouslearning.referralnetwork.android.sample.referral.model.ReferralItem;
+import com.curiouslearning.referralnetwork.api.model.ApplicationInfo;
+import com.curiouslearning.referralnetwork.api.model.ReferralItem;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;

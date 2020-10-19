@@ -1,2 +1,3 @@
+include ':referralnetwork'
 include ':app'
 rootProject.name='sample'

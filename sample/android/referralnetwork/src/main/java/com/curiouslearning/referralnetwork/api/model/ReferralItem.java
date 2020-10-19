@@ -1,12 +1,10 @@
-package com.curiouslearning.referralnetwork.android.sample.referral.model;
+package com.curiouslearning.referralnetwork.api.model;
 
 import com.google.auto.value.AutoValue;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
 import com.ryanharter.auto.value.gson.AutoValueGsonTypeAdapterFactory;
-
-import java.util.List;
 
 @AutoValue
 public abstract class ReferralItem {

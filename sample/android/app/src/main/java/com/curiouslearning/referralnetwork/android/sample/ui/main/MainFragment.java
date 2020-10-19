@@ -12,13 +12,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import okhttp3.OkHttpClient;
-import okhttp3.logging.HttpLoggingInterceptor;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -30,16 +23,13 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.curiouslearning.referralnetwork.android.sample.BuildConfig;
+import com.curiouslearning.referralnetwork.OnReferralResultListener;
+import com.curiouslearning.referralnetwork.ReferralClient;
 import com.curiouslearning.referralnetwork.android.sample.R;
 
-import com.curiouslearning.referralnetwork.android.sample.referral.ReferralApi;
-import com.curiouslearning.referralnetwork.android.sample.referral.model.ApplicationInfo;
-import com.curiouslearning.referralnetwork.android.sample.referral.model.ReferralItem;
-import com.curiouslearning.referralnetwork.android.sample.referral.model.ReferralRequest;
-import com.curiouslearning.referralnetwork.android.sample.referral.model.ReferralResponse;
+import com.curiouslearning.referralnetwork.api.model.ApplicationInfo;
+import com.curiouslearning.referralnetwork.api.model.ReferralItem;
 import com.google.firebase.analytics.FirebaseAnalytics;
-import com.google.gson.GsonBuilder;
-import com.ryanharter.auto.value.gson.AutoValueGsonTypeAdapterFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +40,8 @@ public class MainFragment extends Fragment {
 
     private static final String UTM_SOURCE = "lrn";
     private static final String REFERRAL_API_ENDPOINT = "https://referral-gateway-hj2cd4bxba-de.a.run.app";
+
+    private ReferralClient mReferralClient;
 
     private List<ReferralItem> mReferrals;
 
@@ -102,6 +94,22 @@ public class MainFragment extends Fragment {
         layoutManager = new LinearLayoutManager(view.getContext());
         mReferralResultsView.setLayoutManager(layoutManager);
 
+        mReferralClient = ReferralClient.getInstance();
+        mReferralClient.setApiKey(BuildConfig.REFERRAL_API_KEY);
+        mReferralClient.registerReferralResultListener(new OnReferralResultListener() {
+            @Override
+            public void onReferralResult(List<ReferralItem> referrals) {
+                Log.d(TAG, "Received LRN referrals");
+                // Update recycler view
+                mReferrals.clear();
+                for (ReferralItem item : referrals) {
+                    mReferrals.add(item);
+                    Log.i(TAG, item.toString());
+                }
+                mReferralResultAdapter.notifyDataSetChanged();
+            }
+        });
+
         // TODO - make this class implements OnReferralClickListener
         mReferralResultAdapter = new ReferralResultAdapter(mReferrals, new ReferralResultAdapter.OnClickListener() {
             @Override
@@ -128,57 +136,7 @@ public class MainFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 String selectedLocale = mLocaleDropdown.getSelectedItem().toString();
-
-                // Register type adapter so we can use AutoValue with Gson
-                GsonConverterFactory gsonConverterFactory = GsonConverterFactory.create(
-                        new GsonBuilder()
-                                .registerTypeAdapterFactory(new AutoValueGsonTypeAdapterFactory())
-                                .setLenient()
-                                .create());
-
-                // OkHttp Client interceptor to log request and response data
-                HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-                logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-                OkHttpClient httpClient = new OkHttpClient.Builder()
-                        .addInterceptor(logging)
-                        .build();
-
-                Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl(REFERRAL_API_ENDPOINT)
-                        .addConverterFactory(gsonConverterFactory)
-                        .client(httpClient)
-                        .build();
-
-                ReferralApi api = retrofit.create(ReferralApi.class);
-                ReferralRequest body = ReferralRequest.builder()
-                        .setLocale(selectedLocale)
-                        .setPackageName(v.getContext().getPackageName())
-                        .build();
-
-                Call<ReferralResponse> call = api.requestReferral(body, BuildConfig.REFERRAL_API_KEY);
-                call.enqueue(new Callback<ReferralResponse>() {
-                    @Override
-                    public void onResponse(Call<ReferralResponse> call, Response<ReferralResponse> response) {
-                        if (response.isSuccessful()) {
-                            Log.i(TAG, "post submitted to API." + response.body().toString());
-
-                            // Update recycler view
-                            mReferrals.clear();
-                            for (ReferralItem item : response.body().items) {
-                                mReferrals.add(item);
-                                Log.i(TAG, item.toString());
-                            }
-                            mReferralResultAdapter.notifyDataSetChanged();
-                        } else {
-                            Log.e(TAG, response.errorBody().toString());
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<ReferralResponse> call, Throwable t) {
-                        t.printStackTrace();
-                    }
-                });
+                mReferralClient.referralRequest(v.getContext(), selectedLocale);
             }
         });
         return view;
