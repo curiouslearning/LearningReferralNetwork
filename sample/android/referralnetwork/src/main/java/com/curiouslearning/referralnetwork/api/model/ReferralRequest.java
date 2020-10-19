@@ -19,6 +19,7 @@ public abstract class ReferralRequest {
     public abstract Optional<Integer> daysSinceLastSession();
     public abstract Optional<Map<String, Integer>> progressBySkill();
     public abstract Optional<Integer> maxResults();
+    public abstract Optional<Map<String, String>> parameters();
 
     public static Builder builder() {
         return new AutoValue_ReferralRequest.Builder();
@@ -33,6 +34,7 @@ public abstract class ReferralRequest {
         public abstract Builder setDaysSinceLastSession(int value);
         public abstract Builder setProgressBySkill(Map<String, Integer> valueMap);
         public abstract Builder setMaxResults(int value);
+        public abstract Builder setParameters(Map<String, String> paramMap);
 
         public abstract ReferralRequest build();
     }

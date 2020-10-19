@@ -7,5 +7,5 @@ import java.util.List;
 public class ReferralResponse {
 
     @SerializedName("result")
-    public List<ReferralItem> items;
+    public List<ReferralItem> referrals;
 }

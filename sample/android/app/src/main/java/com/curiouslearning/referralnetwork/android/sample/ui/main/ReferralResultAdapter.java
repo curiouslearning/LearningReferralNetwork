@@ -65,7 +65,7 @@ public class ReferralResultAdapter extends RecyclerView.Adapter<ReferralResultAd
     public void onBindViewHolder(ReferralViewHolder holder, int position) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
-        final ApplicationInfo app = mReferrals.get(position).item();
+        final ApplicationInfo app = mReferrals.get(position).appInfo();
         holder.textView.setText(app.title());
         Picasso.get().load(app.iconUrl()).fit().into(holder.iconImageView);
         holder.itemView.setOnClickListener(new View.OnClickListener() {

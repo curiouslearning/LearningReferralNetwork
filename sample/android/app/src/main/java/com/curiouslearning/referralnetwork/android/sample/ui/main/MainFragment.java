@@ -39,7 +39,6 @@ public class MainFragment extends Fragment {
     private static final String TAG = "MainFragment";
 
     private static final String UTM_SOURCE = "lrn";
-    private static final String REFERRAL_API_ENDPOINT = "https://referral-gateway-hj2cd4bxba-de.a.run.app";
 
     private ReferralClient mReferralClient;
 
@@ -102,9 +101,9 @@ public class MainFragment extends Fragment {
                 Log.d(TAG, "Received LRN referrals");
                 // Update recycler view
                 mReferrals.clear();
-                for (ReferralItem item : referrals) {
-                    mReferrals.add(item);
-                    Log.i(TAG, item.toString());
+                for (ReferralItem referral : referrals) {
+                    mReferrals.add(referral);
+                    Log.i(TAG, referral.toString());
                 }
                 mReferralResultAdapter.notifyDataSetChanged();
             }
