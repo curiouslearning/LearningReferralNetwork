@@ -22,6 +22,7 @@ import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.curiouslearning.referralnetwork.ReferralParameters;
 import com.curiouslearning.referralnetwork.android.sample.BuildConfig;
 import com.curiouslearning.referralnetwork.OnReferralResultListener;
 import com.curiouslearning.referralnetwork.ReferralClient;
@@ -33,6 +34,7 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class MainFragment extends Fragment {
 
@@ -68,6 +70,8 @@ public class MainFragment extends Fragment {
             return null;
         }
 
+        Log.d(TAG, "onCreateView");
+
         View view = inflater.inflate(R.layout.main_fragment, container, false);
 
         // Obtain the FirebaseAnalytics instance.
@@ -80,10 +84,11 @@ public class MainFragment extends Fragment {
         Button mReferralButton = (Button) view.findViewById(R.id.referral_button);
 
         //create a list of items for the spinner.
-        String[] items = new String[]{"en-us", "hi-IN"};
+        String[] items = new String[]{"en-US", "hi-IN"};
         //create an adapter to describe how the items are displayed, adapters are used in several places in android.
         //There are multiple variations of this, but this is the basic variant.
-        final ArrayAdapter<String> adapter = new ArrayAdapter<>(view.getContext(), android.R.layout.simple_spinner_dropdown_item, items);
+        final ArrayAdapter<String> adapter = new ArrayAdapter<>(view.getContext(),
+                android.R.layout.simple_spinner_dropdown_item, items);
         //set the spinners adapter to the previously created one.
         mLocaleDropdown.setAdapter(adapter);
 
@@ -93,8 +98,9 @@ public class MainFragment extends Fragment {
         layoutManager = new LinearLayoutManager(view.getContext());
         mReferralResultsView.setLayoutManager(layoutManager);
 
-        mReferralClient = ReferralClient.getInstance();
+        mReferralClient = ReferralClient.getInstance(view.getContext());
         mReferralClient.setApiKey(BuildConfig.REFERRAL_API_KEY);
+
         mReferralClient.registerReferralResultListener(new OnReferralResultListener() {
             @Override
             public void onReferralResult(List<ReferralItem> referrals) {
@@ -110,24 +116,27 @@ public class MainFragment extends Fragment {
         });
 
         // TODO - make this class implements OnReferralClickListener
-        mReferralResultAdapter = new ReferralResultAdapter(mReferrals, new ReferralResultAdapter.OnClickListener() {
-            @Override
-            public void onClick(ApplicationInfo appInfo) {
-                // Send analytic event to Firebase
-                Bundle bundle = new Bundle();
-                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, appInfo.platformId());
-                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, appInfo.title());
-                bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "referral");
-                mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
+        mReferralResultAdapter = new ReferralResultAdapter(mReferrals,
+                new ReferralResultAdapter.OnClickListener() {
+                    @Override
+                    public void onClick(ApplicationInfo appInfo) {
+                        // Send analytic event to Firebase
+                        Bundle bundle = new Bundle();
+                        bundle.putString(FirebaseAnalytics.Param.ITEM_ID, appInfo.platformId());
+                        bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, appInfo.title());
+                        bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "referral");
+                        mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
 
-                Log.d(TAG, "Package name: " + getContext().getPackageName());
-                // Link to Playstore using package name from referral result
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setData(Uri.parse(String.format("https://play.google.com/store/apps/details?utm_source=%s&utm_campaign=%s&id=%s", UTM_SOURCE, getContext().getPackageName(), appInfo.platformId())));
-                intent.setPackage("com.android.vending");
-                startActivity(intent);
-            }
-        });
+                        Log.d(TAG, "Package name: " + getContext().getPackageName());
+                        // Link to Playstore using package name from referral result
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setData(Uri.parse(String.format(
+                                "https://play.google.com/store/apps/details?utm_source=%s&utm_campaign=%s&id=%s",
+                                UTM_SOURCE, getContext().getPackageName(), appInfo.platformId())));
+                        intent.setPackage("com.android.vending");
+                        startActivity(intent);
+                    }
+                });
         mReferralResultsView.setAdapter(mReferralResultAdapter);
 
         // Button to fetch referrals
@@ -135,7 +144,8 @@ public class MainFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 String selectedLocale = mLocaleDropdown.getSelectedItem().toString();
-                mReferralClient.referralRequest(v.getContext(), selectedLocale);
+                mReferralClient.referralRequest(
+                        ReferralParameters.builder().setLanguage(Locale.forLanguageTag(selectedLocale).getLanguage()).build());
             }
         });
         return view;
