@@ -22,9 +22,7 @@ import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.curiouslearning.referralnetwork.ReferralParameters;
 import com.curiouslearning.referralnetwork.android.sample.BuildConfig;
-import com.curiouslearning.referralnetwork.OnReferralResultListener;
 import com.curiouslearning.referralnetwork.ReferralClient;
 import com.curiouslearning.referralnetwork.android.sample.R;
 
@@ -100,8 +98,9 @@ public class MainFragment extends Fragment {
 
         mReferralClient = ReferralClient.getInstance(view.getContext());
         mReferralClient.setApiKey(BuildConfig.REFERRAL_API_KEY);
+        mReferralClient.setProgress(50);
 
-        mReferralClient.registerReferralResultListener(new OnReferralResultListener() {
+        mReferralClient.registerReferralResultListener(new ReferralClient.OnReferralResultListener() {
             @Override
             public void onReferralResult(List<ReferralItem> referrals) {
                 Log.d(TAG, "Received LRN referrals");
@@ -144,8 +143,7 @@ public class MainFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 String selectedLocale = mLocaleDropdown.getSelectedItem().toString();
-                mReferralClient.referralRequest(
-                        ReferralParameters.builder().setLanguage(Locale.forLanguageTag(selectedLocale).getLanguage()).build());
+                mReferralClient.referralRequest(Locale.forLanguageTag(selectedLocale).getLanguage(), 4);
             }
         });
         return view;

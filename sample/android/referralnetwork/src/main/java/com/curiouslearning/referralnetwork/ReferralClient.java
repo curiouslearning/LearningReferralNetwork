@@ -1,23 +1,23 @@
 package com.curiouslearning.referralnetwork;
 
-import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
-import android.os.Bundle;
-import android.os.LocaleList;
 import android.util.Log;
 
 import com.curiouslearning.referralnetwork.api.ReferralApi;
+import com.curiouslearning.referralnetwork.api.model.ReferralItem;
 import com.curiouslearning.referralnetwork.api.model.ReferralRequest;
 import com.curiouslearning.referralnetwork.api.model.ReferralResponse;
 import com.google.gson.GsonBuilder;
 import com.ryanharter.auto.value.gson.AutoValueGsonTypeAdapterFactory;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -27,8 +27,11 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+/**
+ * Referral API client used by LRN apps
+ */
 public class ReferralClient {
-    private static final String TAG = "ReferralClient";
+    private static final String TAG = "LRN.Client";
 
     /**
      * HTTP endpoint for referral API
@@ -38,52 +41,49 @@ public class ReferralClient {
     /**
      * HTTP connection timeout to account for backend startup delay
      */
-    private static final int CONNECTION_TIMEOUT_SECONDS = 15;
-
-    /**
-     * Maximum value for learning progress
-     */
-    public static final int MAX_PROGRESS = 100;
+    private static final int CONNECTION_TIMEOUT_SECONDS = 30;
 
     private static ReferralClient mInstance;
 
     private OnReferralResultListener mReferralResultListener;
     private String mApiKey;
-    private OkHttpClient mHttpClient;
-    private Retrofit mRetrofit;
-    private ReferralApi mApi;
+    private final ReferralApi mApi;
 
     /**
      * Application package name is passed in the referral request. It is required by the
      * recommendation engine to come up with app referrals that are related to the current
      * application (in addition to other usage metrics)
      */
-    private String mPackageName;
-    private Locale mSystemLocale;
+    private final String mPackageName;
 
     /**
-     * The user's progress in the learning application as expressed on a scale from
-     * zero to {@link #MAX_PROGRESS}
+     * Container class for all reportable metrics with regard to the current user
      */
-    private int mProgress;
+    private ReportableMetrics reportableMetrics;
 
-    // Number of sessions, a session is defined as the application in the Started/Resumed state
-    private int mTotalSessions;
-    private int mAverageSessionLength;
-    private int mDaysSinceLastSession;
-    private long lastActivityResumedTime;
-    private int mSessionStartProgress;
-    private int mSessionEndProgress;
-
+    /**
+     * Listener interface for referral result callback
+     */
+    public interface OnReferralResultListener {
+        void onReferralResult(List<ReferralItem> referrals);
+    }
 
     /**
      * Do not expose class constructor, access a singleton instance from {@link #getInstance(Context)}
      */
     private ReferralClient(Context context) {
-        mTotalSessions = 0;
-        mProgress = 0;
         mApiKey = "";
-        mSystemLocale = Locale.getDefault();
+        mPackageName = context.getPackageName();
+        reportableMetrics = new ReportableMetrics();
+
+        // Get application context to register for activity event callbacks. This allows us
+        // to report anonymize usage statistics to improve recommendation relevance
+        Application app = (Application) context.getApplicationContext();
+        if (app == null) {
+            Log.w(TAG, "unexpected null application, cannot listen for events");
+        } else {
+            app.registerActivityLifecycleCallbacks(reportableMetrics);
+        }
 
         // OkHttp Client interceptor to log request and response data
         // TODO - may eventually remove logging entirely
@@ -94,7 +94,8 @@ public class ReferralClient {
             logging.setLevel(HttpLoggingInterceptor.Level.NONE);
         }
 
-        mHttpClient = new OkHttpClient.Builder()
+        OkHttpClient httpClient = new OkHttpClient();
+        httpClient.newBuilder()
                 .addInterceptor(logging)
                 .connectTimeout(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .build();
@@ -107,70 +108,13 @@ public class ReferralClient {
                         .setLenient()
                         .create());
 
-        mRetrofit = new Retrofit.Builder()
+        Retrofit mRetrofit = new Retrofit.Builder()
                 .baseUrl(REFERRAL_API_ENDPOINT)
                 .addConverterFactory(gsonConverterFactory)
-                .client(mHttpClient)
+                .client(httpClient)
                 .build();
 
         mApi = mRetrofit.create(ReferralApi.class);
-
-        Application app = (Application) context.getApplicationContext();
-        if (app == null) {
-            Log.w(TAG, "Unable to register lifecycle notifications - null application");
-            mPackageName = "unknown";
-        } else {
-            mPackageName = app.getPackageName();
-
-            app.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
-                @Override
-                public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle bundle) {
-                    Log.d(TAG, "onActivityCreated");
-                }
-
-                @Override
-                public void onActivityStarted(@NonNull Activity activity) {
-                    Log.d(TAG, "onActivityStarted");
-                }
-
-                @Override
-                public void onActivityResumed(@NonNull Activity activity) {
-                    // Locale settings may have changed while the app was paused. Reinitialize the
-                    // TODO - Android API 24+ allows user to specify multiple locales in their
-                    //   system  preference, which can be accessed via LocaleList.getDefault()
-                    mSystemLocale = Locale.getDefault();
-
-                    mTotalSessions++;
-                    lastActivityResumedTime = System.currentTimeMillis();
-                    mSessionStartProgress = mProgress;
-                    Log.d(TAG, "onActivityResumed - total sessions: " + mTotalSessions);
-                }
-
-                @Override
-                public void onActivityPaused(@NonNull Activity activity) {
-                    long duration = System.currentTimeMillis() - lastActivityResumedTime;
-                    mSessionEndProgress = mProgress;
-                    Log.d(TAG, "onActivityPaused - duration: " + duration / 1000 + " sec");
-                    // TODO - Report to server
-                }
-
-                @Override
-                public void onActivityStopped(@NonNull Activity activity) {
-                    Log.d(TAG, "onActivityStopped");
-                }
-
-                @Override
-                public void onActivitySaveInstanceState(@NonNull Activity activity,
-                                                        @NonNull Bundle bundle) {
-                    Log.d(TAG, "onActivitySaveInstanceState");
-                }
-
-                @Override
-                public void onActivityDestroyed(@NonNull Activity activity) {
-                    Log.d(TAG, "onActivityDestroyed");
-                }
-            });
-        }
     }
 
     /**
@@ -178,13 +122,11 @@ public class ReferralClient {
      *
      * @return ReferralClient instance
      */
-    @RequiresPermission(allOf = {"android.permission.INTERNET"})
     @NonNull
     public static ReferralClient getInstance(@NonNull Context context) {
         if (mInstance == null) {
             mInstance = new ReferralClient(context);
         }
-        Log.d(TAG, "Get Instance");
         return mInstance;
     }
 
@@ -199,16 +141,31 @@ public class ReferralClient {
 
     /**
      * Make asynchronous request to the recommendation engine backend
-     * <p>
-     * TODO - context is currently used to pick up the android app package name, this could be
-     * a simple String so that the Java class is more portable
      *
-     * @param parameters parameters of the referral request
+     * @param maxResults maximum number of referrals to fetch
      */
-    public void referralRequest(ReferralParameters parameters) {
+    public void referralRequest(String language, int maxResults) {
+        if (mApiKey.isEmpty()) {
+            Log.e(TAG, "Missing API key for referral request");
+            return;
+        }
+
+        // Locale settings may have changed while the app was paused. Reinitialize the
+        // TODO - Android API 24+ allows user to specify multiple locales in their
+        //   system  preference, which can be accessed via LocaleList.getDefault()
+        Locale locale = Locale.getDefault();
+
+        // TODO - revisit how we represent the progress parameter in referral API, it may
+        //   not be mapped to a set of skills down the road and just be a lot simpler
+        Map<String, Integer> progressMap = new HashMap<>();
+        progressMap.put("default", reportableMetrics.getProgress());
+
+        // Construct the request body
         ReferralRequest body = ReferralRequest.builder()
-                .setLocale(mSystemLocale.toLanguageTag())
+                .setLocale(locale.toLanguageTag())
                 .setPackageName(mPackageName)
+                .setProgressBySkill(progressMap)
+                .setMaxResults(maxResults)
                 .build();
 
         Call<ReferralResponse> call = mApi.requestReferral(body, mApiKey);
@@ -218,10 +175,13 @@ public class ReferralClient {
                                    Response<ReferralResponse> response) {
                 if (response.isSuccessful()) {
                     if (mReferralResultListener != null) {
+                        // TODO - instead of passing the content of the response body directly,
+                        //   post-process the response into client object so that we can add UTM
+                        //   parameters to the PlayStore path (create a Referral class)
                         mReferralResultListener.onReferralResult(response.body().referrals);
                     } else {
                         Log.w(TAG,
-                                "Received response from referral API but no result listener is registered");
+                                "Received referral response but no result listener is registered");
                     }
                 } else {
                     Log.e(TAG, response.errorBody().toString());
@@ -236,15 +196,7 @@ public class ReferralClient {
     }
 
     public void setProgress(int progress) {
-        if (progress < 0 || progress > MAX_PROGRESS) {
-            Log.e(TAG, "Invalid progress value, expect 0 - " + MAX_PROGRESS);
-            return;
-        }
-
-        if (progress < mProgress) {
-            Log.w(TAG, "Setting progress to less than the previous value");
-        }
-        mProgress = progress;
+        reportableMetrics.setProgress(progress);
     }
 
     /**
