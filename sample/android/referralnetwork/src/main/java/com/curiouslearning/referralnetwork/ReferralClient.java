@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresPermission;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
@@ -59,7 +58,7 @@ public class ReferralClient {
     /**
      * Container class for all reportable metrics with regard to the current user
      */
-    private ReportableMetrics reportableMetrics;
+    private final SessionManager sessionManager;
 
     /**
      * Listener interface for referral result callback
@@ -74,16 +73,7 @@ public class ReferralClient {
     private ReferralClient(Context context) {
         mApiKey = "";
         mPackageName = context.getPackageName();
-        reportableMetrics = new ReportableMetrics();
-
-        // Get application context to register for activity event callbacks. This allows us
-        // to report anonymize usage statistics to improve recommendation relevance
-        Application app = (Application) context.getApplicationContext();
-        if (app == null) {
-            Log.w(TAG, "unexpected null application, cannot listen for events");
-        } else {
-            app.registerActivityLifecycleCallbacks(reportableMetrics);
-        }
+        sessionManager = new SessionManager(context);
 
         // OkHttp Client interceptor to log request and response data
         // TODO - may eventually remove logging entirely
@@ -158,7 +148,7 @@ public class ReferralClient {
         // TODO - revisit how we represent the progress parameter in referral API, it may
         //   not be mapped to a set of skills down the road and just be a lot simpler
         Map<String, Integer> progressMap = new HashMap<>();
-        progressMap.put("default", reportableMetrics.getProgress());
+        progressMap.put("default", sessionManager.getProgress());
 
         // Construct the request body
         ReferralRequest body = ReferralRequest.builder()
@@ -190,13 +180,15 @@ public class ReferralClient {
 
             @Override
             public void onFailure(Call<ReferralResponse> call, Throwable t) {
+                // TODO - Should return an error status or throw exception so the calling app
+                //   can handle the error (ie. connection timeout)
                 t.printStackTrace();
             }
         });
     }
 
     public void setProgress(int progress) {
-        reportableMetrics.setProgress(progress);
+        sessionManager.setProgress(progress);
     }
 
     /**
