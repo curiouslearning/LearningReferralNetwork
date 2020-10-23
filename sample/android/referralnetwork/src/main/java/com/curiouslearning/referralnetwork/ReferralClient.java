@@ -155,6 +155,7 @@ public class ReferralClient {
                 .setLocale(locale.toLanguageTag())
                 .setPackageName(mPackageName)
                 .setProgressBySkill(progressMap)
+                .setTotalSessions(sessionManager.getTotalSessions())
                 .setMaxResults(maxResults)
                 .build();
 

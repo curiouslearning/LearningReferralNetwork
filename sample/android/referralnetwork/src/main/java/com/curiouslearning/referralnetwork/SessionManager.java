@@ -7,10 +7,15 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -41,11 +46,18 @@ public class SessionManager implements Application.ActivityLifecycleCallbacks {
      */
     public static final int MAX_PROGRESS = 100;
 
+    private List<Event> mEvents;
+
     /**
      * The user's progress in the learning application as expressed on a scale from
      * zero to {@link #MAX_PROGRESS}
      */
     private int mProgress;
+
+    /**
+     * App instance ID obtained from {@link FirebaseInstanceId} for event tagging
+     */
+    private String mInstanceId;
 
     /**
      * Keep track of app usage statistics for referral requests
@@ -66,19 +78,20 @@ public class SessionManager implements Application.ActivityLifecycleCallbacks {
      * Session information are cached in {@link android.content.SharedPreferences} and reported
      * to the analytics backend in batch. They could be purged as soon as the data is sent, so
      * do not rely on historical values to be persistent for calculating usage statistics
-     *
+     * <p>
      * TODO -
      * Since a session is bounded by the app resume and stop instances, it doesn't make sense to
      * report the session at app stopped as it would incur more data bandwidth. Instead, caching
      * them locally either in memory or in shared pref, and create a periodic task to report back
      * to the server
-     *
+     * <p>
      * Option 1 - onPeriodicTaskEntry - if data connection available, report all events back to
      * server, otherwise, dump them into shared pref
      */
     private final SharedPreferences mSharedPref;
 
     public SessionManager(Context context) {
+        mEvents = new ArrayList<>();
         mProgress = 0;
         mTotalSessions = 0;
         mAverageSessionLength = 0;
@@ -97,6 +110,16 @@ public class SessionManager implements Application.ActivityLifecycleCallbacks {
         } else {
             app.registerActivityLifecycleCallbacks(this);
         }
+
+        // Get instance ID
+        FirebaseInstanceId.getInstance().getInstanceId()
+            .addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
+                @Override
+                public void onSuccess(InstanceIdResult instanceIdResult) {
+                    mInstanceId = instanceIdResult.getId();
+                    Log.i(TAG, "instance ID: " + mInstanceId);
+                }
+            });
     }
 
     @Override
@@ -111,6 +134,8 @@ public class SessionManager implements Application.ActivityLifecycleCallbacks {
 
     @Override
     public void onActivityResumed(@NonNull Activity activity) {
+        Event event = new Event(Event.EventType.SESSION_START);
+        Log.d(TAG, "Event: " + event.toString());
         mLastActivityResumedTime = System.currentTimeMillis();
 
         mSessionStartProgress = mProgress;
@@ -127,6 +152,9 @@ public class SessionManager implements Application.ActivityLifecycleCallbacks {
 
     @Override
     public void onActivityStopped(@NonNull Activity activity) {
+        Event event = new Event(Event.EventType.SESSION_END);
+        Log.d(TAG, "Event: " + event.toString());
+
         mLastActivityPausedTime = System.currentTimeMillis();
 
         // session duration in seconds
@@ -164,6 +192,8 @@ public class SessionManager implements Application.ActivityLifecycleCallbacks {
             return;
         }
 
+        Event event = new Event(Event.EventType.PROGRESS_CHANGE);
+        Log.d(TAG, "Event: " + event.toString());
 
         mLastProgressChangedTime = System.currentTimeMillis();
 
@@ -177,8 +207,8 @@ public class SessionManager implements Application.ActivityLifecycleCallbacks {
         return mProgress;
     }
 
-    public void getAggregatedMetricsSummary() {
-        return;
+    public int getTotalSessions() {
+        return mTotalSessions;
     }
 
     /**
