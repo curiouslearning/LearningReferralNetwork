@@ -1,6 +1,5 @@
 package com.curiouslearning.referralnetwork;
 
-import android.app.Application;
 import android.content.Context;
 import android.util.Log;
 
@@ -11,8 +10,9 @@ import com.curiouslearning.referralnetwork.api.model.ReferralResponse;
 import com.google.gson.GsonBuilder;
 import com.ryanharter.auto.value.gson.AutoValueGsonTypeAdapterFactory;
 
+import java.net.SocketTimeoutException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -42,10 +42,14 @@ public class ReferralClient {
      */
     private static final int CONNECTION_TIMEOUT_SECONDS = 30;
 
+    // TODO - may move this to a separate class/enum
+    public static final int SUCCESS = 0;
+    public static final int ERROR_CONNECTION_TIMEOUT = -1;
+    public static final int ERROR_UNKNOWN = -2;
+
     private static ReferralClient mInstance;
 
     private OnReferralResultListener mReferralResultListener;
-    private String mApiKey;
     private final ReferralApi mApi;
 
     /**
@@ -58,22 +62,14 @@ public class ReferralClient {
     /**
      * Container class for all reportable metrics with regard to the current user
      */
-    private final SessionManager sessionManager;
-
-    /**
-     * Listener interface for referral result callback
-     */
-    public interface OnReferralResultListener {
-        void onReferralResult(List<ReferralItem> referrals);
-    }
+    private final SessionManager mSessionManager;
 
     /**
      * Do not expose class constructor, access a singleton instance from {@link #getInstance(Context)}
      */
     private ReferralClient(Context context) {
-        mApiKey = "";
         mPackageName = context.getPackageName();
-        sessionManager = new SessionManager(context);
+        mSessionManager = new SessionManager(context);
 
         // OkHttp Client interceptor to log request and response data
         // TODO - may eventually remove logging entirely
@@ -135,11 +131,6 @@ public class ReferralClient {
      * @param maxResults maximum number of referrals to fetch
      */
     public void referralRequest(String language, int maxResults) {
-        if (mApiKey.isEmpty()) {
-            Log.e(TAG, "Missing API key for referral request");
-            return;
-        }
-
         // Locale settings may have changed while the app was paused. Reinitialize the
         // TODO - Android API 24+ allows user to specify multiple locales in their
         //   system  preference, which can be accessed via LocaleList.getDefault()
@@ -148,56 +139,69 @@ public class ReferralClient {
         // TODO - revisit how we represent the progress parameter in referral API, it may
         //   not be mapped to a set of skills down the road and just be a lot simpler
         Map<String, Integer> progressMap = new HashMap<>();
-        progressMap.put("default", sessionManager.getProgress());
+        progressMap.put("default", mSessionManager.getProgress());
 
         // Construct the request body
         ReferralRequest body = ReferralRequest.builder()
                 .setLocale(locale.toLanguageTag())
                 .setPackageName(mPackageName)
                 .setProgressBySkill(progressMap)
-                .setTotalSessions(sessionManager.getTotalSessions())
+                .setTotalSessions(mSessionManager.getTotalSessions())
                 .setMaxResults(maxResults)
                 .build();
 
-        Call<ReferralResponse> call = mApi.requestReferral(body, mApiKey);
+        Call<ReferralResponse> call = mApi.requestReferral(body, BuildConfig.REFERRAL_API_KEY);
         call.enqueue(new Callback<ReferralResponse>() {
             @Override
             public void onResponse(Call<ReferralResponse> call,
                                    Response<ReferralResponse> response) {
-                if (response.isSuccessful()) {
-                    if (mReferralResultListener != null) {
-                        // TODO - instead of passing the content of the response body directly,
-                        //   post-process the response into client object so that we can add UTM
-                        //   parameters to the PlayStore path (create a Referral class)
-                        mReferralResultListener.onReferralResult(response.body().referrals);
-                    } else {
-                        Log.w(TAG,
-                                "Received referral response but no result listener is registered");
-                    }
+                if (mReferralResultListener == null) {
+                    Log.w(TAG, "No referral result listener is registered");
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    // TODO - check response status for error
+                    // if (response.body().status ...)
+
+                    // TODO - instead of passing the content of the response body directly,
+                    //   post-process the response into client object so that we can add UTM
+                    //   parameters to the PlayStore path (create a Referral class)
+                    mReferralResultListener.onReferralResult(response.body().referrals, SUCCESS);
                 } else {
-                    Log.e(TAG, response.errorBody().toString());
+                    Log.w(TAG, response.errorBody().toString());
+
+                    // TODO - we can use response errorBody message to determine the exact
+                    //  cause of failure, and return proper error code. Use HTTP status code for now
+                    mReferralResultListener.onReferralResult(new ArrayList<ReferralItem>(), response.code());
                 }
             }
 
             @Override
             public void onFailure(Call<ReferralResponse> call, Throwable t) {
-                // TODO - Should return an error status or throw exception so the calling app
-                //   can handle the error (ie. connection timeout)
-                t.printStackTrace();
+                if (mReferralResultListener == null) {
+                    Log.w(TAG, "No referral result listener is registered");
+                    return;
+                }
+
+                if (t instanceof SocketTimeoutException) {
+                    Log.w(TAG, "Connection timeout");
+                    mReferralResultListener.onReferralResult(new ArrayList<ReferralItem>(),
+                        ERROR_CONNECTION_TIMEOUT);
+                } else {
+                    t.printStackTrace();
+                    mReferralResultListener.onReferralResult(new ArrayList<ReferralItem>(),
+                        ERROR_UNKNOWN);
+                }
             }
         });
     }
 
-    public void setProgress(int progress) {
-        sessionManager.setProgress(progress);
-    }
-
     /**
-     * Set API key for Referral API
      *
-     * @param key api key string
+     * @param type skill type
+     * @param progress progress in percentage
      */
-    public void setApiKey(String key) {
-        mApiKey = key;
+    public void setProgress(String type, int progress) {
+        mSessionManager.setProgress(progress);
     }
 }

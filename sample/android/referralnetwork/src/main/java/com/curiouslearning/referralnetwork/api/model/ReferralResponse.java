@@ -8,4 +8,6 @@ public class ReferralResponse {
 
     @SerializedName("result")
     public List<ReferralItem> referrals;
+
+    // TODO - add status field
 }

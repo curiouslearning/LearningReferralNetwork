@@ -22,7 +22,7 @@ import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.curiouslearning.referralnetwork.android.sample.BuildConfig;
+import com.curiouslearning.referralnetwork.OnReferralResultListener;
 import com.curiouslearning.referralnetwork.ReferralClient;
 import com.curiouslearning.referralnetwork.android.sample.R;
 
@@ -33,6 +33,8 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import static com.curiouslearning.referralnetwork.ReferralClient.SUCCESS;
 
 public class MainFragment extends Fragment {
 
@@ -97,20 +99,21 @@ public class MainFragment extends Fragment {
         mReferralResultsView.setLayoutManager(layoutManager);
 
         mReferralClient = ReferralClient.getInstance(view.getContext());
-        mReferralClient.setApiKey(BuildConfig.REFERRAL_API_KEY);
-        mReferralClient.setProgress(50);
+        mReferralClient.setProgress("letter sounds", 50);
 
-        mReferralClient.registerReferralResultListener(new ReferralClient.OnReferralResultListener() {
+        mReferralClient.registerReferralResultListener(new OnReferralResultListener() {
             @Override
-            public void onReferralResult(List<ReferralItem> referrals) {
-                Log.d(TAG, "Received LRN referrals");
-                // Update recycler view
-                mReferrals.clear();
-                for (ReferralItem referral : referrals) {
-                    mReferrals.add(referral);
-                    Log.i(TAG, referral.toString());
+            public void onReferralResult(List<ReferralItem> referrals, int status) {
+                if (status == SUCCESS) {
+                    Log.d(TAG, "Received LRN referrals");
+                    // Update recycler view
+                    mReferrals.clear();
+                    for (ReferralItem referral : referrals) {
+                        mReferrals.add(referral);
+                        Log.i(TAG, referral.toString());
+                    }
+                    mReferralResultAdapter.notifyDataSetChanged();
                 }
-                mReferralResultAdapter.notifyDataSetChanged();
             }
         });
 
