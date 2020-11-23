@@ -1,5 +1,10 @@
 # Getting Started
 
+### Development Environment Setup
+GCP keys for the firebase_adminsdk service account are required to provide the credentials for Firestore access.
+The keys can be downloaded from Google Cloud Console and saved to the local filesystem. Launch spring-boot:run
+with the environment variable GOOGLE_APPLICATION_CREDENTIALS set to the key path (ie. project-id.json)
+
 ### Reference Documentation
 For further reference, please consider the following sections:
 
