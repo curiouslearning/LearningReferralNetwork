@@ -1,0 +1,258 @@
+swagger: '2.0'
+info:
+  contact:
+    email: jyip@curiouslearning.org
+  description: >-
+    API that provides application recommendation from the learning referral network
+  license:
+    name: MIT
+    url: 'https://opensource.org/licenses/MIT'
+  termsOfService: 'http://curiouslearning.org'
+  title: Referral API
+  version: 1.0.0
+# Hostname of the ESP gateway
+host: referral-gateway-hj2cd4bxba-de.a.run.app
+basePath: /api/v1
+x-google-backend:
+  # URL of the API backend
+  address: https://learning-referral-network.appspot.com/
+  # IAP OAuth Client
+  jwt_audience: 972445763316-p4opm7kh8mlhkslu4b7itpjesdqoba5l.apps.googleusercontent.com
+schemes:
+  - https
+paths:
+  /referral:
+    post:
+      tags:
+        - query
+      operationId: get_referral
+      summary: 'Request for app referrals from the recommendation engine given a set of user metrics'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: referralRequestBody  # This is ignored for request body and for documentation only
+          description: 'A JSON object containing the parameters for getting referrals from
+            the recommendation engine'
+          required: true
+          schema:
+            $ref: '#/definitions/ReferralRequestBody'
+      responses:
+        '200':
+          description: 'List of app referrals from the recommendation engine'
+          schema:
+            $ref: '#/definitions/ReferralResult'
+        '400':
+          $ref: '#/responses/Invalid'
+      x-swagger-router-controller: "controllers.referral"
+  /events:
+    post:
+      tags:
+        - event
+      operationId: write_events
+      summary: 'Record in-app events for usage analytics.'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: eventsRequestBody
+          required: true
+          schema:
+            $ref: '#/definitions/EventsRequestBody'
+      responses:
+        '200':
+          description: 'List of app referrals from the recommendation engine'
+        '400':
+          $ref: '#/responses/Invalid'
+      x-swagger-router-controller: "controllers.events"
+definitions:
+  ApiError:
+    type: object
+    properties:
+      code:
+        format: int32
+        type: integer
+      message:
+        type: string
+    required:
+      - code
+      - message
+  RequestMetadata:
+    type: object
+    description: 'Information about the source of the request'
+    properties:
+      instance_id:
+        description: 'A pseudonymous ID that identifies the source of the request'
+        type: string
+      app_package_name:
+        description: 'Package name of the application making this request. This field is
+           used to provide additional context to the recommendation engine or analytics
+           For Android applications this would be the com.* package ID.'
+        type: string
+      locale:
+        description: 'Device locale'
+        type: string
+  ApplicationInfo:
+    type: object
+    properties:
+      title:
+        description: 'Title of the application to be displayed on the referral UI'
+        type: string
+      app_id:
+        description: >-
+          Platform specific unique identifier for the application. This would be
+          package name for Android, bundle ID for iOS and URL for web-based
+          applications.
+        type: string
+      locale:
+        description: 'ISO 639 Locale Code (ie. “en-us”)'
+        type: string
+      description:
+        description: >-
+          Additional description of the application on the referral UI if we
+          don’t want our users to be redirected out of the application to see
+          this information
+        type: string
+      icon_url:
+        description: 'URL path of the application icon image'
+        type: string
+      skills:
+        type: array
+        items:
+          type: string
+        description: >-
+          Skills are key-value pairs that describe the application content
+          and intent. Certain attributes can be applied to most applications and
+          those are defined here. Such attributes are expected to grow as we
+          gain more understanding of the product, but existing definitions
+          should not change for backward compatibility reasons. Applications are
+          not required to have all the attributes defined either. It is also
+          possible for applications to provide additional keyword “tags” to help
+          improve query relevance.
+  ReferralResult:
+    description: 'App referrals generated from recommendation engine'
+    type: object
+    properties:
+      app:
+        description: >-
+          list of apps to recommend based of the parameters provided in
+          the referral request
+        type: array
+        items:
+          type: object
+          properties:
+            info:
+              description: 'Details about a recommended app'
+              $ref: '#/definitions/ApplicationInfo'
+            relevance:
+              description: 'Relevance score of a recommended app (0-100)'
+              type: number
+              format: float
+      status:
+        description: 'Status of the referral request'
+        type: number
+  Event:
+    type: object
+    description: 'An in-app event that is used to derive usage analytics'
+    properties:
+      source:
+        description: 'Information about the original source of the event'
+        $ref: '#/definitions/RequestMetadata'
+      timestamp:
+        description: >-
+          Event occurrence in the date-time notation as defined by RFC 3339,
+          section 5.6 (e.g. 2017-07-21T17:32:28Z)
+        type: string
+        format: date-time
+      name:
+        description: 'Name of the event'
+        type: string
+      parameters:
+        description: 'Additional information about the event in key-value pairs'
+        type: array
+        items:
+          type: object
+          additionalProperties:
+            type: string
+  ReferralRequestBody:
+    description: 'Request body for the Referral POST request'
+    type: object
+    properties:
+      metadata:
+        $ref: '#/definitions/RequestMetadata'
+      max_results:
+        type: integer
+        default: 20
+        maximum: 100
+        minimum: 1
+      content_language:
+        description: >-
+          Language of the displayed content within the application in ISO 639 alpha-2
+          or alpha-3 language code. This represents the language that the user is currently
+          learning, which may not necessarily be the same as the user’s locale settings.
+          If not provided, the recommendation engine will use locales to make a best-effort
+          determination
+        type: string
+      total_sessions:
+        type: integer
+        minimum: 0
+      average_session_length:
+        type: integer
+        minimum: 0
+      days_since_last_session:
+        type: integer
+        minimum: 0
+      progress_by_skill:
+        description: >-
+          A map of key-value pairs representing the percent completion
+          by the user for each skill associated with this application.
+        type: object
+        additionalProperties:
+          type: integer
+          minimum: 0
+      extras:
+        description: 'Additional parameters in key-value pairs'
+        type: object
+        additionalProperties:
+          type: string
+  EventsRequestBody:
+    description: 'Request body for the Events POST request'
+    type: object
+    properties:
+      metadata:
+        $ref: '#/definitions/RequestMetadata'
+      events:
+        description: 'List of in-app events collected over a period of time'
+        type: array
+        items:
+          $ref: '#/definitions/Event'
+securityDefinitions:
+  ApiKey:
+    type: apiKey
+    name: key
+    in: query
+    description: basic authentication with API key
+    x-apikeyInfoFunc: "controllers.auth.verify_apikey"
+security:
+  - ApiKey: []
+tags:
+  - description: API to query for recommendations
+    name: query
+responses:
+  Invalid:
+    description: Invalid request body
+    schema:
+      $ref: '#/definitions/ApiError'
+  NotFound:
+    description: The specified resource was not found
+    schema:
+      $ref: '#/definitions/ApiError'
+  Unauthorized:
+    description: Unauthorized
+    schema:
+      $ref: '#/definitions/ApiError'
+
