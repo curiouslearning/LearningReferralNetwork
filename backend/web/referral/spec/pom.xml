@@ -143,7 +143,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/api.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/api-v1.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <apiPackage>com.curiouslearning.referralnetwork.web.referral.api</apiPackage>
                             <modelPackage>com.curiouslearning.referralnetwork.web.referral.model</modelPackage>

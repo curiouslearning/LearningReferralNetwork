@@ -22,6 +22,24 @@
     <gcp.project-id>learning-referral-network</gcp.project-id>
   </properties>
 
+  <profiles>
+    <profile>
+      <id>dev</id>
+      <properties>
+        <spring.profiles.active>dev</spring.profiles.active>
+      </properties>
+    </profile>
+    <profile>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <id>appengine</id>
+      <properties>
+        <spring.profiles.active>appengine</spring.profiles.active>
+      </properties>
+    </profile>
+  </profiles>
+
   <dependencies>
     <dependency>
       <groupId>com.curiouslearning.referralnetwork.web.referral</groupId>

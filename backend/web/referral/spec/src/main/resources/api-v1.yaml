@@ -8,14 +8,14 @@ info:
     name: MIT
     url: 'https://opensource.org/licenses/MIT'
   termsOfService: 'http://curiouslearning.org'
-  title: Referral API
+  title: Referral API v1
   version: 1.0.0
 # Hostname of the ESP gateway
 host: referral-gateway-hj2cd4bxba-de.a.run.app
 basePath: /api/v1
 x-google-backend:
   # URL of the API backend
-  address: https://learning-referral-network.appspot.com/
+  address: https://referral-dot-learning-referral-network.appspot.com/
   # IAP OAuth Client
   jwt_audience: 972445763316-p4opm7kh8mlhkslu4b7itpjesdqoba5l.apps.googleusercontent.com
 schemes:

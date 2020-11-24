@@ -1,2 +1,6 @@
+service: referral
 runtime: java11
 env: standard
+instance_class: F4
+env_variables:
+  SPRING_PROFILES_ACTIVE: "appengine"

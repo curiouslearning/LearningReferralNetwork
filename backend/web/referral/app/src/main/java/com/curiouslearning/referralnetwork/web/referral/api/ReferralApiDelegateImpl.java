@@ -63,7 +63,7 @@ public class ReferralApiDelegateImpl implements ReferralApiDelegate {
             .iconUrl(doc.getString(ICON_URL_FIELD))
             .skills((List<String>) doc.get("skills")));
         // TODO - relevance score is hardcoded for now
-        referralApp.setRelevance(0.5f);
+        referralApp.setRelevance(0.46f);
         referralApps.add(referralApp);
       }
     } catch (Exception e) {
