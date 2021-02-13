@@ -1,9 +1,10 @@
 package com.curiouslearning.referralnetwork.web.referral.api;
 
-import com.curiouslearning.referralnetwork.web.referral.model.ApplicationInfo;
-import com.curiouslearning.referralnetwork.web.referral.model.ReferralRequestBody;
-import com.curiouslearning.referralnetwork.web.referral.model.ReferralResult;
-import com.curiouslearning.referralnetwork.web.referral.model.ReferralResultApp;
+import com.curiouslearning.referralnetwork.spec.spring.model.ApplicationInfo;
+import com.curiouslearning.referralnetwork.spec.spring.api.ReferralApiDelegate;
+import com.curiouslearning.referralnetwork.spec.spring.model.ReferralRequestBody;
+import com.curiouslearning.referralnetwork.spec.spring.model.ReferralResult;
+import com.curiouslearning.referralnetwork.spec.spring.model.ReferralResultApp;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.Firestore;

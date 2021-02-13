@@ -1,4 +1,3 @@
-referral/app/target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -25,8 +24,12 @@ referral/app/target/
 /nbdist/
 /.nb-gradle/
 build/
+target/
 !**/src/main/**/build/
 !**/src/test/**/build/
+
+### Gradle ###
+.gradle
 
 ### VS Code ###
 .vscode/

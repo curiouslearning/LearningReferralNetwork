@@ -1,0 +1,44 @@
+plugins {
+    id 'com.google.cloud.tools.appengine' version '2.4.1'
+    id 'org.springframework.boot' version '2.4.2'
+    id 'io.spring.dependency-management' version '1.0.8.RELEASE'
+    id 'java'
+}
+
+group = 'com.curiouslearning.referralnetwork.web'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = 11
+
+//ext['springCloudVersion'] = 'Hoxton.RELEASE'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+springBoot {
+    mainClass = 'com.curiouslearning.referralnetwork.web.referral.ReferralApplication'
+}
+
+dependencies {
+    implementation('com.curiouslearning.referralnetwork.spec:spring-server:1.0.0')
+    implementation('org.springframework.cloud:spring-cloud-gcp-starter-firestore')
+    implementation('org.springframework.boot:spring-boot-starter-web')
+
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+// App Engine tasks configuration
+appengine {
+    // deploy configuration
+    deploy {
+        projectId = 'learning-referral-network' // gcloud config set project
+        version = 'GCLOUD_CONFIG'   // gcloud to generate a version
+    }
+}
